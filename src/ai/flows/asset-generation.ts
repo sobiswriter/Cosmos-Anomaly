@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -17,7 +18,7 @@ const GenerateImageInputSchema = z.object({
 export type GenerateImageInput = z.infer<typeof GenerateImageInputSchema>;
 
 const GenerateImageOutputSchema = z.object({
-  imageUrl: z.string().describe('The data URI of the generated image.'),
+  imageUrl: z.string().describe('The data URI of the generated image or a placeholder URL if generation fails.'),
 });
 export type GenerateImageOutput = z.infer<typeof GenerateImageOutputSchema>;
 
@@ -32,18 +33,23 @@ const generateImageFlow = ai.defineFlow(
     outputSchema: GenerateImageOutputSchema,
   },
   async input => {
-    const {media} = await ai.generate({
-      model: 'googleai/gemini-2.0-flash-preview-image-generation',
-      prompt: `Generate an image based on this description. The image should be in a dark, neo-noir, cinematic style with high contrast. It may have ethereal, glowing UI elements. It should have a persistent film grain effect. Description: ${input.narrativeMoment}`,
-      config: {
-        responseModalities: ['TEXT', 'IMAGE'],
-      },
-    });
+    try {
+      const {media} = await ai.generate({
+        model: 'googleai/gemini-2.0-flash-preview-image-generation',
+        prompt: `Generate an image based on this description. The image should be in a dark, neo-noir, cinematic style with high contrast. It may have ethereal, glowing UI elements. It should have a persistent film grain effect. Description: ${input.narrativeMoment}`,
+        config: {
+          responseModalities: ['TEXT', 'IMAGE'],
+        },
+      });
 
-    if (!media || !media.url) {
-      throw new Error('Image generation failed: No image URL returned.');
+      if (media?.url) {
+        return {imageUrl: media.url};
+      }
+    } catch (error) {
+      console.error('Image generation failed, using placeholder.', error);
     }
-
-    return {imageUrl: media.url};
+    
+    // Fallback to a placeholder if generation fails or returns no URL
+    return { imageUrl: "https://placehold.co/1280x720/100818/7DF9FF.png" };
   }
 );

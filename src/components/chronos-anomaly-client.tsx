@@ -85,23 +85,27 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
       let isMilestone = false;
 
       if (narrativeResult.narrative.startsWith(MILESTONE_FLAG)) {
-        const milestoneNarrative = narrativeResult.narrative.replace(MILESTONE_FLAG, '').trim();
+        const milestoneNarrative = narrativeResult.narrative.substring(narrativeResult.narrative.indexOf(MILESTONE_FLAG) + MILESTONE_FLAG.length).trim();
+        const mainNarrative = narrativeResult.narrative.substring(0, narrativeResult.narrative.indexOf(MILESTONE_FLAG)).trim();
+        
         imagePrompt = milestoneNarrative;
-        displayNarrative = milestoneNarrative; 
+        displayNarrative = mainNarrative ? mainNarrative : milestoneNarrative; 
         isMilestone = true;
       }
 
       if (!imagePrompt) {
         imagePrompt = `An abstract representation of the following event: ${displayNarrative}`;
       }
+      
+      const commentaryInput = {
+        timelineEvent: displayNarrative,
+        userChoice: choice.text,
+        currentTimeline: timeline.map(t => t.choiceMade).join(' -> '),
+      };
 
       const [imageResult, commentaryResult] = await Promise.all([
         generateImage({ narrativeMoment: imagePrompt }),
-        getWatcherCommentary({
-          timelineEvent: displayNarrative,
-          userChoice: choice.text,
-          currentTimeline: timeline.map(t => t.choiceMade).join(' -> '),
-        })
+        getWatcherCommentary(commentaryInput),
       ]);
       
       const updatedNarrativeResult = {...narrativeResult, narrative: displayNarrative};
@@ -123,7 +127,7 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
       setChoices(narrativeResult.choices || []);
 
       if (isMilestone) {
-        setMilestoneEvent({ imageUrl: imageResult.imageUrl, narrative: displayNarrative });
+        setMilestoneEvent({ imageUrl: imageResult.imageUrl, narrative: imagePrompt });
       }
 
     } catch (error) {
@@ -421,3 +425,5 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
     </>
   );
 }
+
+    

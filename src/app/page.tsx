@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Heart } from "lucide-react";
 import Image from 'next/image';
 import { CreateEventForm } from '@/components/create-event-form';
 
@@ -123,6 +123,48 @@ export default function MainMenu() {
             <CardContent>
                 <CreateEventForm />
             </CardContent>
+        </Card>
+
+        <div className="my-12 md:my-16">
+            <div className="relative">
+                <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                    <div className="w-full border-t border-dashed border-primary/30"></div>
+                </div>
+                <div className="relative flex justify-center">
+                    <span className="bg-background px-4 text-lg font-headline text-primary">A WORD FROM THE CREATOR</span>
+                </div>
+            </div>
+        </div>
+
+        <Card className="max-w-4xl mx-auto bg-card/50 backdrop-blur-sm border-primary/20">
+          <CardContent className="p-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
+              <div className="md:col-span-2">
+                <h3 className="font-headline text-3xl text-primary mb-2">Hey, I'm Sobi!</h3>
+                <p className="text-muted-foreground mb-4">
+                  I'm the temporal tinkerer who built this little universe. Chronos Anomaly started as a fascination with 'what if' scenarios and a desire to play with the incredible power of generative AI. It's a playground for history buffs, sci-fi fans, and anyone who's ever wondered how a tiny change could create a totally different future.
+                </p>
+                <p className="text-muted-foreground">
+                  If you're having fun bending time and watching the consequences ripple across history, consider fueling future development. Every bit of support helps keep the timeline-monitoring servers running and the Watcher well-supplied with sarcasm. Thanks for playing!
+                </p>
+              </div>
+              <div className="flex flex-col items-center justify-center gap-4">
+                  <div className="w-48 h-48 relative border-2 border-dashed border-amber/50 rounded-lg p-2">
+                    <Image 
+                      src="/images/pay.png" 
+                      alt="Payment QR Code Placeholder" 
+                      width={192} 
+                      height={192} 
+                      className="object-contain w-full h-full"
+                      data-ai-hint="payment qr"
+                    />
+                  </div>
+                  <Button variant="outline" className="border-amber/50 text-amber/80 hover:bg-amber/10 hover:text-amber">
+                    <Heart className="mr-2 h-4 w-4" /> Support the Project
+                  </Button>
+              </div>
+            </div>
+          </CardContent>
         </Card>
 
       </div>

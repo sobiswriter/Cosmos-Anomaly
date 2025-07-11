@@ -31,6 +31,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Toaster } from '@/components/ui/toaster';
 import { useToast } from '@/hooks/use-toast';
+import MilestoneModal from '@/components/milestone-modal';
 
 const MILESTONE_FLAG = '[MILESTONE_EVENT]';
 
@@ -43,6 +44,7 @@ export default function ChronosAnomalyClient() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isMounted, setIsMounted] = useState(false);
   const { toast } = useToast();
+  const [milestoneEvent, setMilestoneEvent] = useState<{imageUrl: string; narrative: string} | null>(null);
   
   useEffect(() => {
     setIsMounted(true);
@@ -68,10 +70,12 @@ export default function ChronosAnomalyClient() {
 
       let finalNarrative = narrativeResult.narrative;
       let imagePrompt : string | undefined = undefined;
+      let isMilestone = false;
 
       if(finalNarrative.startsWith(MILESTONE_FLAG)) {
         imagePrompt = finalNarrative.replace(MILESTONE_FLAG, '').trim();
         finalNarrative = imagePrompt;
+        isMilestone = true;
       }
 
       if (!imagePrompt) {
@@ -102,6 +106,10 @@ export default function ChronosAnomalyClient() {
       setImageUrl(imageResult.imageUrl);
       setCommentary(commentaryResult.commentary);
 
+      if (isMilestone) {
+        setMilestoneEvent({ imageUrl: imageResult.imageUrl, narrative: finalNarrative });
+      }
+
     } catch (error) {
       console.error("Failed to process choice:", error);
       toast({
@@ -109,14 +117,18 @@ export default function ChronosAnomalyClient() {
         title: "Temporal Anomaly Detected",
         description: "Failed to connect with the Consequence Engine. Please try again.",
       });
-      const lastEvent = timeline[timeline.length - 1];
+      const lastEvent = timeline.length > 0 ? timeline[timeline.length - 1] : null;
       if (lastEvent) {
         setNarrative(lastEvent.generatedNarrative);
+        setImageUrl(lastEvent.imageUrl);
+        setCommentary(lastEvent.watcherCommentary);
         const lastNode = story[lastEvent.nodeId] || story.start;
         setCurrentNode(lastNode);
       } else {
         setCurrentNode(story.start);
         setNarrative(story.start.narrative);
+        setImageUrl('');
+        setCommentary('');
       }
     } finally {
       setIsLoading(false);
@@ -192,6 +204,12 @@ export default function ChronosAnomalyClient() {
 
   return (
     <>
+      <MilestoneModal 
+        isOpen={!!milestoneEvent}
+        onClose={() => setMilestoneEvent(null)}
+        imageUrl={milestoneEvent?.imageUrl || ""}
+        narrative={milestoneEvent?.narrative || ""}
+      />
       <main className="p-4 md:p-6 lg:p-8 relative min-h-screen flex flex-col font-body">
         <header className="text-center mb-6 md:mb-8 relative">
           <h1 className="font-headline text-4xl md:text-5xl lg:text-6xl text-amber drop-shadow-amber animate-pulse">
@@ -257,9 +275,9 @@ export default function ChronosAnomalyClient() {
                  {isMounted && (
                     <Accordion type="single" collapsible className="w-full">
                       {reversedTimeline.length > 0 ? (
-                        reversedTimeline.map((event) => (
+                        reversedTimeline.map((event, index) => (
                           <AccordionItem key={event.id} value={`item-${event.id}`}>
-                            <AccordionTrigger className="text-left">Event {event.id}: {event.choiceMade}</AccordionTrigger>
+                            <AccordionTrigger className="text-left">Event {timeline.length - index}: {event.choiceMade}</AccordionTrigger>
                             <AccordionContent className="space-y-2">
                               <p className="text-sm text-muted-foreground">{event.generatedNarrative}</p>
                               <p className="text-xs italic text-amber/60">Watcher: "{event.watcherCommentary}"</p>

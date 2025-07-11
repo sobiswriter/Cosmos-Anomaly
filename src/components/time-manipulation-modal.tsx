@@ -91,7 +91,7 @@ export default function TimeManipulationModal({
                 />
                  <DialogFooter>
                     <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-                    <Button type="submit" className="bg-amber text-black hover:bg-amber/90">Commit to Timeline</Button>
+                    <Button type="submit">Commit to Timeline</Button>
                 </DialogFooter>
             </form>
         </Form>

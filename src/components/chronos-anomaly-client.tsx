@@ -32,7 +32,9 @@ export default function ChronosAnomalyClient() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isMounted, setIsMounted] = useState(false);
   const { toast } = useToast();
-
+  
+  // This effect runs once on mount to set the isMounted flag.
+  // It's crucial for preventing hydration errors with useLocalStorage.
   useEffect(() => {
     setIsMounted(true);
   }, []);
@@ -41,6 +43,7 @@ export default function ChronosAnomalyClient() {
     setIsLoading(true);
 
     try {
+      // Find the next story node based on the user's choice.
       const nextNode = story[choice.nextNodeId];
       if (!nextNode) {
         throw new Error("Story path not found.");
@@ -57,12 +60,17 @@ export default function ChronosAnomalyClient() {
       const narrativeResult : GenerateNarrativeOutput = await generateNarrative({ choice: choice.text, previousNarrative });
 
       let finalNarrative = narrativeResult.narrative;
-      let imagePrompt : string;
+      let imagePrompt : string | undefined = undefined;
 
+      // Check for the milestone flag to trigger a specific image generation.
       if(finalNarrative.startsWith(MILESTONE_FLAG)) {
         imagePrompt = finalNarrative.replace(MILESTONE_FLAG, '').trim();
+        // The narrative shown to the user should not include the flag.
         finalNarrative = imagePrompt;
-      } else {
+      }
+
+      // If no milestone, use the predefined prompt from the story node.
+      if (!imagePrompt) {
         imagePrompt = nextNode.imagePrompt || "An abstract representation of fate and choice.";
       }
 
@@ -76,12 +84,13 @@ export default function ChronosAnomalyClient() {
       ]);
 
       const newTimelineEvent: TimelineEvent = {
-        id: timeline.length + 1,
+        id: Date.now(), // Use a more unique ID
         timestamp: new Date().toISOString(),
         choiceMade: choice.text,
         generatedNarrative: finalNarrative,
         imageUrl: imageResult.imageUrl,
         watcherCommentary: commentaryResult.commentary,
+        nodeId: choice.nextNodeId,
       };
 
       setTimeline(prev => [...prev, newTimelineEvent]);
@@ -98,13 +107,21 @@ export default function ChronosAnomalyClient() {
       });
       // Revert to previous state if something goes wrong
       const lastEvent = timeline[timeline.length - 1];
-      setNarrative(lastEvent ? lastEvent.generatedNarrative : story.start.narrative);
+      if (lastEvent) {
+        setNarrative(lastEvent.generatedNarrative);
+        const lastNode = story[lastEvent.nodeId] || story.start;
+        setCurrentNode(lastNode);
+      } else {
+        setCurrentNode(story.start);
+        setNarrative(story.start.narrative);
+      }
     } finally {
       setIsLoading(false);
     }
   };
   
   useEffect(() => {
+    // Only run this logic on the client after the component has mounted.
     if (!isMounted) return;
 
     const initialize = async () => {
@@ -112,19 +129,9 @@ export default function ChronosAnomalyClient() {
       try {
         if(timeline.length > 0) {
           const lastEvent = timeline[timeline.length - 1];
-          let lastNode: StoryNode | undefined = undefined;
-
-          // Find the node that resulted from the last choice
-          for (const key in story) {
-            const node = story[key];
-            const foundChoice = node.choices?.find(c => c.text === lastEvent.choiceMade);
-            if (foundChoice && story[foundChoice.nextNodeId]) {
-              lastNode = story[foundChoice.nextNodeId];
-              break;
-            }
-          }
+          const lastNode = story[lastEvent.nodeId] || story.start;
           
-          setCurrentNode(lastNode || story.start);
+          setCurrentNode(lastNode);
           setNarrative(lastEvent.generatedNarrative);
           setImageUrl(lastEvent.imageUrl);
           setCommentary(lastEvent.watcherCommentary);

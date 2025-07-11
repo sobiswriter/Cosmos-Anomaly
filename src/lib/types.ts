@@ -5,4 +5,5 @@ export type TimelineEvent = {
   generatedNarrative: string;
   imageUrl: string;
   watcherCommentary: string;
+  nodeId: string;
 };

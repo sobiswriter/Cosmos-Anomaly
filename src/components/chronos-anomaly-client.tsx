@@ -209,7 +209,7 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
       />
       <main className="p-4 md:p-6 lg:p-8 relative min-h-screen flex flex-col font-body">
         <header className="text-center mb-6 md:mb-8 relative">
-           <Link href="/" className="absolute top-0 left-0 text-primary hover:text-amber transition-colors">
+           <Link href="/" className="absolute top-0 left-0 text-primary hover:text-amber transition-colors z-10">
             &larr; Back to Horizon
           </Link>
           <h1 className="font-headline text-4xl md:text-5xl lg:text-6xl text-amber drop-shadow-amber animate-pulse">
@@ -340,7 +340,7 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
                       transition={{ duration: 0.8 }}
                       className="text-base md:text-lg leading-loose"
                     >
-                      {isLoading && !narrative ? '...' : narrative}
+                      {isLoading && !narrative ? '...' : narrative.replace('[MILESTONE_EVENT]', '').trim()}
                     </motion.p>
                   </AnimatePresence>
                 )}

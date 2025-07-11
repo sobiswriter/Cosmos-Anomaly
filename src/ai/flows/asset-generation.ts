@@ -34,7 +34,7 @@ const generateImageFlow = ai.defineFlow(
   async input => {
     const {media} = await ai.generate({
       model: 'googleai/gemini-2.0-flash-preview-image-generation',
-      prompt: `Generate a stylized, high-contrast, dark neo-noir image with ethereal, glowing UI elements (cyan for neutral, amber for critical) and a persistent film grain effect based on this description: ${input.narrativeMoment}`,
+      prompt: `Generate an image based on this description. The image should be in a dark, neo-noir, cinematic style with high contrast. It may have ethereal, glowing UI elements. It should have a persistent film grain effect. Description: ${input.narrativeMoment}`,
       config: {
         responseModalities: ['TEXT', 'IMAGE'],
       },

@@ -79,25 +79,25 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
 
       const narrativeResult : GenerateNarrativeOutput = await generateNarrative({ choice: choice.text, previousNarrative });
 
-      let finalNarrative = narrativeResult.narrative;
+      let displayNarrative = narrativeResult.narrative;
       let imagePrompt : string | undefined = undefined;
       let isMilestone = false;
 
-      if (finalNarrative.startsWith(MILESTONE_FLAG)) {
-        const milestoneNarrative = finalNarrative.replace(MILESTONE_FLAG, '').trim();
+      if (narrativeResult.narrative.startsWith(MILESTONE_FLAG)) {
+        const milestoneNarrative = narrativeResult.narrative.replace(MILESTONE_FLAG, '').trim();
         imagePrompt = milestoneNarrative;
-        finalNarrative = milestoneNarrative; // The narrative IS the milestone description.
+        displayNarrative = milestoneNarrative; // The narrative IS the milestone description.
         isMilestone = true;
       }
 
       if (!imagePrompt) {
-        imagePrompt = "An abstract representation of fate and choice.";
+        imagePrompt = `An abstract representation of the following event: ${displayNarrative}`;
       }
 
       const [imageResult, commentaryResult] = await Promise.all([
         generateImage({ narrativeMoment: imagePrompt }),
         getWatcherCommentary({
-          timelineEvent: `User chose to '${choice.text}'. This led to a state described as: '${finalNarrative}'.`,
+          timelineEvent: displayNarrative,
           userChoice: choice.text,
           currentTimeline: timeline.map(t => t.choiceMade).join(' -> '),
         })
@@ -107,20 +107,20 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
         id: Date.now(),
         timestamp: new Date().toISOString(),
         choiceMade: choice.text,
-        generatedNarrative: finalNarrative,
+        generatedNarrative: displayNarrative,
         imageUrl: imageResult.imageUrl,
         watcherCommentary: commentaryResult.commentary,
         choices: narrativeResult.choices || [], 
       };
 
       setTimeline(prev => [...prev, newTimelineEvent]);
-      setNarrative(finalNarrative);
+      setNarrative(displayNarrative);
       setImageUrl(imageResult.imageUrl);
       setCommentary(commentaryResult.commentary);
       setChoices(narrativeResult.choices || []);
 
       if (isMilestone) {
-        setMilestoneEvent({ imageUrl: imageResult.imageUrl, narrative: finalNarrative });
+        setMilestoneEvent({ imageUrl: imageResult.imageUrl, narrative: displayNarrative });
       }
 
     } catch (error) {
@@ -174,7 +174,7 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
     } finally {
       setIsLoading(false);
     }
-  }, [setTimeline, toast, initialChoice]);
+  }, [setTimeline, toast, initialChoice, processChoice]);
   
   useEffect(() => {
     if (!isMounted) return;
@@ -213,7 +213,9 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
 
   const getEventIdForAccordion = (event: TimelineEvent, index: number) => {
     const totalEvents = timeline.length;
-    return `Event ${totalEvents - index}: ${event.choiceMade}`;
+    const eventNumber = totalEvents - index;
+    const shortChoice = event.choiceMade.length > 30 ? `${event.choiceMade.substring(0, 27)}...` : event.choiceMade;
+    return `Event ${eventNumber}: ${shortChoice}`;
   }
 
 
@@ -363,7 +365,7 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
                       transition={{ duration: 0.8 }}
                       className="text-base md:text-lg leading-loose"
                     >
-                      {isLoading && !narrative ? '...' : narrative.replace('[MILESTONE_EVENT]', '').trim()}
+                      {isLoading && !narrative ? '...' : narrative}
                     </motion.p>
                   </AnimatePresence>
                 )}

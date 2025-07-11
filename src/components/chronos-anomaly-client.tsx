@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Eye, History, Loader2 } from 'lucide-react';
+import { Eye, History, Loader2, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { story, StoryNode, Choice } from '@/lib/story';
 import { type TimelineEvent } from '@/lib/types';
@@ -14,6 +14,17 @@ import { generateImage } from '@/ai/flows/asset-generation';
 import { getWatcherCommentary } from '@/ai/flows/ai-commentary';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -111,6 +122,31 @@ export default function ChronosAnomalyClient() {
       setIsLoading(false);
     }
   };
+
+  const handleReset = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      setTimeline([]);
+      setCurrentNode(story.start);
+      setNarrative(story.start.narrative);
+      setCommentary("The timeline is pristine once more. A clean slate.");
+      const imageResult = await generateImage({ narrativeMoment: story.start.imagePrompt });
+      setImageUrl(imageResult.imageUrl);
+      toast({
+        title: "Timeline Reset",
+        description: "The echoes of your choices have faded.",
+      });
+    } catch (error) {
+      console.error("Failed to reset timeline:", error);
+      toast({
+        variant: "destructive",
+        title: "Reset Failed",
+        description: "Could not reset the timeline. The anomaly persists.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [setTimeline, toast]);
   
   useEffect(() => {
     if (!isMounted) return;
@@ -157,11 +193,30 @@ export default function ChronosAnomalyClient() {
   return (
     <>
       <main className="p-4 md:p-6 lg:p-8 relative min-h-screen flex flex-col font-body">
-        <header className="text-center mb-6 md:mb-8">
+        <header className="text-center mb-6 md:mb-8 relative">
           <h1 className="font-headline text-4xl md:text-5xl lg:text-6xl text-amber drop-shadow-amber animate-pulse">
             Chronos Anomaly
           </h1>
           <p className="text-muted-foreground text-sm md:text-base">Echoes of Choice</p>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" size="sm" className="absolute top-0 right-0 border-amber/30 text-amber/80 hover:bg-amber/10 hover:text-amber">
+                <RotateCcw className="mr-2 h-4 w-4" /> Reset Timeline
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you sure you want to revert time?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. Your current timeline will be permanently erased, and you will return to the beginning of the story.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleReset} className="bg-destructive hover:bg-destructive/80">Erase Timeline</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 xl:gap-8 h-full flex-grow">

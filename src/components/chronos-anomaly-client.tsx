@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, History, Loader2, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { story, type StoryNode, type Choice } from '@/lib/story';
+import { type Choice } from '@/lib/story';
 import { type TimelineEvent } from '@/lib/types';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 
@@ -44,7 +44,6 @@ interface ChronosAnomalyClientProps {
 
 export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt }: ChronosAnomalyClientProps) {
   const [timeline, setTimeline] = useLocalStorage<TimelineEvent[]>(`chronos-timeline-${initialChoice}`, []);
-  const [currentNode, setCurrentNode] = useState<StoryNode | null>(null);
   const [narrative, setNarrative] = useState<string>('');
   const [imageUrl, setImageUrl] = useState<string>('');
   const [commentary, setCommentary] = useState<string>('');
@@ -76,8 +75,9 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
       let isMilestone = false;
 
       if (finalNarrative.startsWith(MILESTONE_FLAG)) {
-        imagePrompt = finalNarrative.replace(MILESTONE_FLAG, '').trim();
-        finalNarrative = imagePrompt;
+        const milestoneNarrative = finalNarrative.replace(MILESTONE_FLAG, '').trim();
+        imagePrompt = milestoneNarrative;
+        finalNarrative = milestoneNarrative; // The narrative IS the milestone description.
         isMilestone = true;
       }
 
@@ -101,7 +101,6 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
         generatedNarrative: finalNarrative,
         imageUrl: imageResult.imageUrl,
         watcherCommentary: commentaryResult.commentary,
-        // We don't have static nodes anymore, so we store the choices for potential future use
         choices: narrativeResult.choices || [], 
       };
 
@@ -194,6 +193,12 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
 
   const reversedTimeline = useMemo(() => [...timeline].reverse(), [timeline]);
 
+  const getEventIdForAccordion = (event: TimelineEvent, index: number) => {
+    const totalEvents = timeline.length;
+    return `Event ${totalEvents - index}: ${event.choiceMade}`;
+  }
+
+
   return (
     <>
       <MilestoneModal 
@@ -272,7 +277,7 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
                       {reversedTimeline.length > 0 ? (
                         reversedTimeline.map((event, index) => (
                           <AccordionItem key={event.id} value={`item-${event.id}`}>
-                            <AccordionTrigger className="text-left">Event {timeline.length - index}: {event.choiceMade}</AccordionTrigger>
+                            <AccordionTrigger className="text-left">{getEventIdForAccordion(event, index)}</AccordionTrigger>
                             <AccordionContent className="space-y-2">
                               <p className="text-sm text-muted-foreground">{event.generatedNarrative}</p>
                               <p className="text-xs italic text-amber/60">Watcher: "{event.watcherCommentary}"</p>
@@ -349,7 +354,7 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
                       key={choice.text}
                       variant="outline"
                       size="lg"
-                      className="text-lg font-headline border-primary/50 hover:bg-primary/20 hover:text-primary transition-all duration-300 h-auto py-4"
+                      className="text-lg font-headline border-primary/50 hover:bg-primary/20 hover:text-primary transition-all duration-300 h-auto py-4 whitespace-normal text-center"
                       onClick={() => handleSelectChoice(choice)}
                       disabled={isLoading}
                     >

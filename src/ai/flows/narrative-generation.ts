@@ -1,4 +1,4 @@
-// use server'
+'use server';
 
 /**
  * @fileOverview Narrative Generation flow using the Consequence Engine.

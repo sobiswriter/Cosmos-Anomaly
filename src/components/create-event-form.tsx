@@ -70,7 +70,7 @@ export function CreateEventForm() {
             </FormItem>
           )}
         />
-        <Button type="submit" size="lg" className="w-full text-lg font-headline bg-amber text-black hover:bg-amber/90">
+        <Button type="submit" size="lg" className="w-full text-lg font-headline">
             Start Simulation <ArrowRight className="ml-2 h-5 w-5" />
         </Button>
       </form>

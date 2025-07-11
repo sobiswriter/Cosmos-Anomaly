@@ -47,6 +47,8 @@ const prompt = ai.definePrompt({
   3.  **Consequences:** Analyze the user's choice and list 2-3 distinct 'positive_consequences' and 2-3 'negative_consequences'. These should be concise bullet points.
   4.  **Choices:** Provide 3 or 4 new, distinct, and compelling choices for the user. These choices MUST be SHORT and CONCISE (2-5 words) and diverse. One choice must ALWAYS be a variation that allows for custom user input (e.g., "Choose your own path...", "Forge a new direction...").
 
+  **SPECIAL INSTRUCTION - TIME JUMPS:** If the user's choice involves skipping time (e.g., "Jump forward 10 years," "Show me the world in 20 years"), you MUST adjust the 'timeline' field to reflect the new year. The narrative should summarize the key developments during the skipped period.
+
   Previous Narrative Context: {{{previousNarrative}}}
 
   User Choice: {{{choice}}}

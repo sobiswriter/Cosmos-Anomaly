@@ -23,7 +23,10 @@ const ChoiceSchema = z.object({
 });
 
 const GenerateNarrativeOutputSchema = z.object({
+    timeline: z.string().describe("The current year or date of the event, e.g., '1913'."),
     narrative: z.string().describe('The generated narrative based on the user choice. If a major, visually representable event has occurred, it will be prefixed with the flag [MILESTONE_EVENT] and describe the event in a way that can be used to generate an image or newsreel.'),
+    positive_consequences: z.array(z.string()).describe("A list of 2-3 positive or neutral outcomes from the user's choice."),
+    negative_consequences: z.array(z.string()).describe("A list of 2-3 negative or unforeseen outcomes from the user's choice."),
     choices: z.array(ChoiceSchema).min(3).max(4).describe("A diverse set of 3 or 4 short, concise choices for the user. The choices should be distinct and offer different paths (e.g., direct action, observation, personal involvement, custom input). One choice should always be a variant of 'Define your own path...' or 'Choose another way...' to allow for user text input."),
 });
 export type GenerateNarrativeOutput = z.infer<typeof GenerateNarrativeOutputSchema>;
@@ -36,16 +39,13 @@ const prompt = ai.definePrompt({
   name: 'narrativeGenerationPrompt',
   input: {schema: GenerateNarrativeInputSchema},
   output: {schema: GenerateNarrativeOutputSchema},
-  prompt: `You are the Chronicler, a dispassionate, objective historian AI. Your task is to extrapolate the most plausible year-by-year consequences of a major historical alteration. Your tone is factual, dramatic, and grounded. You focus on geopolitical, societal, and technological shifts. Do not editorialize. Your output for each year must be a single, impactful paragraph. When you determine that a major, visually representable event has occurred (a major battle, a political treaty, a cultural shift), you will prefix your output with the flag [MILESTONE_EVENT] and describe the event in a way that can be used to generate an image or newsreel.
+  prompt: `You are the Chronicler, a dispassionate, objective historian AI. Your task is to extrapolate the most plausible year-by-year consequences of a major historical alteration. Your tone is factual, dramatic, and grounded. 
 
-After the narrative, you MUST provide 3 or 4 new, distinct, and compelling choices for the user.
-**CRITICAL INSTRUCTION:** The choices MUST be SHORT and CONCISE (2-5 words). They must be diverse and offer different levels of engagement. For example:
-- Observe from afar.
-- Intervene directly.
-- Become a key figure.
-- Define a new path...
-
-One of the choices must ALWAYS be a variation that allows for custom user input (e.g., "Choose your own path...", "Forge a new direction...", "Intervene in another way...").
+  **CRITICAL INSTRUCTION:** For each narrative step, you must provide:
+  1.  **Timeline:** The specific year the event takes place.
+  2.  **Narrative:** A single, impactful paragraph describing the events of that year. If a major, visually representable event occurs (a major battle, a political treaty, a cultural shift), prefix the narrative with the flag [MILESTONE_EVENT] and describe it for image generation.
+  3.  **Consequences:** Analyze the user's choice and list 2-3 distinct 'positive_consequences' and 2-3 'negative_consequences'. These should be concise bullet points.
+  4.  **Choices:** Provide 3 or 4 new, distinct, and compelling choices for the user. These choices MUST be SHORT and CONCISE (2-5 words) and diverse. One choice must ALWAYS be a variation that allows for custom user input (e.g., "Choose your own path...", "Forge a new direction...").
 
   Previous Narrative Context: {{{previousNarrative}}}
 

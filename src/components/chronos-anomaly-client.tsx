@@ -4,7 +4,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Eye, History, Loader2, RotateCcw } from 'lucide-react';
+import { Eye, History, Loader2, RotateCcw, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { type Choice } from '@/lib/story';
 import { type TimelineEvent } from '@/lib/types';
@@ -35,6 +35,7 @@ import { useToast } from '@/hooks/use-toast';
 import MilestoneModal from '@/components/milestone-modal';
 import Link from 'next/link';
 import CustomChoiceModal from './custom-choice-modal';
+import { Separator } from './ui/separator';
 
 const MILESTONE_FLAG = '[MILESTONE_EVENT]';
 const CUSTOM_CHOICE_KEYWORDS = ['path', 'way', 'define', 'choose', 'another', '...'];
@@ -46,7 +47,7 @@ interface ChronosAnomalyClientProps {
 
 export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt }: ChronosAnomalyClientProps) {
   const [timeline, setTimeline] = useLocalStorage<TimelineEvent[]>(`chronos-timeline-${initialChoice}`, []);
-  const [narrative, setNarrative] = useState<string>('');
+  const [narrativeData, setNarrativeData] = useState<Partial<GenerateNarrativeOutput>>({});
   const [imageUrl, setImageUrl] = useState<string>('');
   const [commentary, setCommentary] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -70,9 +71,9 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
     setCustomChoiceModalOpen(false);
 
     try {
-      const previousNarrative = narrative;
+      const previousNarrative = narrativeData.narrative;
       
-      setNarrative("Recalibrating timeline...");
+      setNarrativeData({ narrative: "Recalibrating timeline..."});
       setImageUrl('');
       setCommentary('');
       setChoices([]);
@@ -86,7 +87,7 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
       if (narrativeResult.narrative.startsWith(MILESTONE_FLAG)) {
         const milestoneNarrative = narrativeResult.narrative.replace(MILESTONE_FLAG, '').trim();
         imagePrompt = milestoneNarrative;
-        displayNarrative = milestoneNarrative; // The narrative IS the milestone description.
+        displayNarrative = milestoneNarrative; 
         isMilestone = true;
       }
 
@@ -102,19 +103,21 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
           currentTimeline: timeline.map(t => t.choiceMade).join(' -> '),
         })
       ]);
+      
+      const updatedNarrativeResult = {...narrativeResult, narrative: displayNarrative};
 
       const newTimelineEvent: TimelineEvent = {
         id: Date.now(),
         timestamp: new Date().toISOString(),
         choiceMade: choice.text,
-        generatedNarrative: displayNarrative,
+        generatedNarrative: updatedNarrativeResult,
         imageUrl: imageResult.imageUrl,
         watcherCommentary: commentaryResult.commentary,
         choices: narrativeResult.choices || [], 
       };
 
       setTimeline(prev => [...prev, newTimelineEvent]);
-      setNarrative(displayNarrative);
+      setNarrativeData(updatedNarrativeResult);
       setImageUrl(imageResult.imageUrl);
       setCommentary(commentaryResult.commentary);
       setChoices(narrativeResult.choices || []);
@@ -132,12 +135,10 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
       });
       const lastEvent = timeline.length > 0 ? timeline[timeline.length - 1] : null;
       if (lastEvent) {
-        setNarrative(lastEvent.generatedNarrative);
+        setNarrativeData(lastEvent.generatedNarrative);
         setImageUrl(lastEvent.imageUrl);
         setCommentary(lastEvent.watcherCommentary);
         setChoices(lastEvent.choices);
-      } else {
-        // This case is handled by initialization
       }
     } finally {
       setIsLoading(false);
@@ -157,7 +158,6 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
     setIsLoading(true);
     try {
       setTimeline([]);
-      // Instead of going to a "start" node, we re-trigger the initial choice
       await processChoice({ text: initialChoice });
 
       toast({
@@ -174,7 +174,8 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
     } finally {
       setIsLoading(false);
     }
-  }, [setTimeline, toast, initialChoice, processChoice]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [setTimeline, toast, initialChoice]);
   
   useEffect(() => {
     if (!isMounted) return;
@@ -184,12 +185,11 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
       try {
         if (timeline.length > 0) {
           const lastEvent = timeline[timeline.length - 1];
-          setNarrative(lastEvent.generatedNarrative);
+          setNarrativeData(lastEvent.generatedNarrative);
           setImageUrl(lastEvent.imageUrl);
           setCommentary(lastEvent.watcherCommentary);
           setChoices(lastEvent.choices);
         } else {
-          // This is a new timeline, start from the beginning
           setCommentary("The Watcher is observing. The first choice has been made.");
           await processChoice({ text: initialChoice });
         }
@@ -304,7 +304,7 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
                           <AccordionItem key={event.id} value={`item-${event.id}`}>
                             <AccordionTrigger className="text-left">{getEventIdForAccordion(event, index)}</AccordionTrigger>
                             <AccordionContent className="space-y-2">
-                              <p className="text-sm text-muted-foreground">{event.generatedNarrative}</p>
+                              <p className="text-sm text-muted-foreground">{event.generatedNarrative.narrative}</p>
                               <p className="text-xs italic text-amber/60">Watcher: "{event.watcherCommentary}"</p>
                             </AccordionContent>
                           </AccordionItem>
@@ -350,7 +350,7 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
 
             <Card className="flex-grow p-6 flex flex-col justify-between bg-card/50 backdrop-blur-sm border-secondary order-2 lg:order-3">
               <ScrollArea className="flex-grow mb-6 pr-3">
-                {isLoading && narrative.includes('Recalibrating') ? (
+                 {isLoading && narrativeData?.narrative?.includes('Recalibrating') ? (
                   <div className="space-y-3">
                     <Skeleton className="h-4 w-full" />
                     <Skeleton className="h-4 w-full" />
@@ -358,20 +358,44 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
                   </div>
                 ) : (
                    <AnimatePresence mode="wait">
-                    <motion.p
-                      key={narrative}
+                    <motion.div
+                      key={narrativeData?.narrative}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ duration: 0.8 }}
-                      className="text-base md:text-lg leading-loose"
                     >
-                      {isLoading && !narrative ? '...' : narrative}
-                    </motion.p>
+                      <h2 className='font-headline text-2xl text-primary mb-2'>{narrativeData?.timeline || 'Calculating...'}</h2>
+                      <p className="text-base md:text-lg leading-loose mb-6">
+                        {isLoading && !narrativeData?.narrative ? '...' : narrativeData?.narrative}
+                      </p>
+
+                      {(narrativeData?.positive_consequences || narrativeData?.negative_consequences) && <Separator className="my-4 bg-primary/20" />}
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                        {narrativeData.positive_consequences && narrativeData.positive_consequences.length > 0 && (
+                          <div className='space-y-2'>
+                            <h3 className='font-headline text-lg text-green-400 flex items-center gap-2'><ThumbsUp className='w-5 h-5' /> Positive Consequences</h3>
+                            <ul className='list-disc list-inside text-muted-foreground space-y-1 text-sm'>
+                              {narrativeData.positive_consequences.map((item, i) => <li key={i}>{item}</li>)}
+                            </ul>
+                          </div>
+                        )}
+                         {narrativeData.negative_consequences && narrativeData.negative_consequences.length > 0 && (
+                          <div className='space-y-2'>
+                            <h3 className='font-headline text-lg text-red-400 flex items-center gap-2'><ThumbsDown className='w-5 h-5' /> Negative Consequences</h3>
+                             <ul className='list-disc list-inside text-muted-foreground space-y-1 text-sm'>
+                              {narrativeData.negative_consequences.map((item, i) => <li key={i}>{item}</li>)}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+
+                    </motion.div>
                   </AnimatePresence>
                 )}
               </ScrollArea>
               
-              <div className="space-y-3">
+              <div className="space-y-3 mt-4">
                 {choices.length > 0 && <p className="text-center font-headline text-primary drop-shadow-cyan">What is your will?</p>}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {choices.map((choice) => (

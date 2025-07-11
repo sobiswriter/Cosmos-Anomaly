@@ -389,7 +389,7 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
                           <div className='space-y-2'>
                             <h3 className='font-headline text-lg text-green-400 flex items-center gap-2'><ThumbsUp className='w-5 h-5' /> Positive Consequences</h3>
                             <ul className='list-disc list-inside text-muted-foreground space-y-1 text-sm'>
-                              {narrativeData.positive_consequences.map((item, i) => <li key={i}>{item.replace(/^[\*\-]\s*/, '')}</li>)}
+                              {narrativeData.positive_consequences.map((item, i) => <li key={i}>{item.replace(/^[\*\-\:]\s*/, '')}</li>)}
                             </ul>
                           </div>
                         )}
@@ -397,7 +397,7 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
                           <div className='space-y-2'>
                             <h3 className='font-headline text-lg text-red-400 flex items-center gap-2'><ThumbsDown className='w-5 h-5' /> Negative Consequences</h3>
                              <ul className='list-disc list-inside text-muted-foreground space-y-1 text-sm'>
-                              {narrativeData.negative_consequences.map((item, i) => <li key={i}>{item.replace(/^[\*\-]\s*/, '')}</li>)}
+                              {narrativeData.negative_consequences.map((item, i) => <li key={i}>{item.replace(/^[\*\-\:]\s*/, '')}</li>)}
                             </ul>
                           </div>
                         )}

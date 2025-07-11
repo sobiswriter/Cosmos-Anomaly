@@ -15,6 +15,7 @@ import {
 import {
     Form,
     FormControl,
+    FormDescription as FormDesc,
     FormField,
     FormItem,
     FormLabel,
@@ -85,13 +86,16 @@ export default function TimeManipulationModal({
                             {...field}
                             />
                         </FormControl>
+                        <FormDesc>
+                            For best results, provide a specific year (e.g., "Show me what the world is like in 1975.").
+                        </FormDesc>
                         <FormMessage />
                     </FormItem>
                 )}
                 />
                  <DialogFooter>
                     <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-                    <Button type="submit">Commit to Timeline</Button>
+                    <Button type="submit" className="bg-primary text-primary-foreground hover:bg-primary/90">Commit to Timeline</Button>
                 </DialogFooter>
             </form>
         </Form>

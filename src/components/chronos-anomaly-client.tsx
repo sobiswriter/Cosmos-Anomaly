@@ -4,7 +4,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Eye, History, Loader2, RotateCcw, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Eye, History, Loader2, RotateCcw, ThumbsUp, ThumbsDown, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { type Choice } from '@/lib/story';
 import { type TimelineEvent } from '@/lib/types';
@@ -36,6 +36,7 @@ import MilestoneModal from '@/components/milestone-modal';
 import Link from 'next/link';
 import CustomChoiceModal from './custom-choice-modal';
 import { Separator } from './ui/separator';
+import TimeManipulationModal from './time-manipulation-modal';
 
 const MILESTONE_FLAG = '[MILESTONE_EVENT]';
 const CUSTOM_CHOICE_KEYWORDS = ['path', 'way', 'define', 'choose', 'another', '...'];
@@ -56,6 +57,7 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
   const [milestoneEvent, setMilestoneEvent] = useState<{imageUrl: string; narrative: string} | null>(null);
   const [choices, setChoices] = useState<Choice[]>([]);
   const [isCustomChoiceModalOpen, setCustomChoiceModalOpen] = useState(false);
+  const [isTimeModalOpen, setTimeModalOpen] = useState(false);
   
   useEffect(() => {
     setIsMounted(true);
@@ -69,6 +71,7 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
   const processChoice = async (choice: { text: string }, isReset: boolean = false) => {
     setIsLoading(true);
     setCustomChoiceModalOpen(false);
+    setTimeModalOpen(false);
 
     try {
       const previousNarrative = isReset ? undefined : narrativeData.narrative;
@@ -88,10 +91,9 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
       if (narrativeResult.narrative.includes(MILESTONE_FLAG)) {
         isMilestone = true;
         const parts = narrativeResult.narrative.split(MILESTONE_FLAG);
-        const milestoneContent = parts.length > 1 ? parts[1].trim() : '';
-        displayNarrative = parts[0].trim() || milestoneContent;
-        imagePrompt = milestoneContent;
-        milestoneNarrativeForModal = milestoneContent;
+        milestoneNarrativeForModal = parts.length > 1 ? parts[1].trim() : '';
+        displayNarrative = parts[0].trim() || milestoneNarrativeForModal; 
+        imagePrompt = milestoneNarrativeForModal;
       }
       
       if (narrativeResult.timeline && displayNarrative.startsWith(narrativeResult.timeline)) {
@@ -240,6 +242,11 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
         onClose={() => setCustomChoiceModalOpen(false)}
         onSubmit={(customChoice) => processChoice({ text: customChoice })}
       />
+      <TimeManipulationModal
+        isOpen={isTimeModalOpen}
+        onClose={() => setTimeModalOpen(false)}
+        onSubmit={(timeChoice) => processChoice({ text: timeChoice })}
+      />
       <main className="p-4 md:p-6 lg:p-8 relative min-h-screen flex flex-col font-body">
         <header className="text-center mb-6 md:mb-8 relative">
            <Link href="/" className="absolute top-0 left-0 text-primary hover:text-amber transition-colors z-10">
@@ -249,25 +256,30 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
             Chronos Anomaly
           </h1>
           <p className="text-muted-foreground text-sm md:text-base">Echoes of Choice</p>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="outline" size="sm" className="absolute top-0 right-0 border-amber/30 text-amber/80 hover:bg-amber/10 hover:text-amber">
-                <RotateCcw className="mr-2 h-4 w-4" /> Reset Timeline
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Are you sure you want to revert time?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This action cannot be undone. Your current timeline will be permanently erased, and you will return to the beginning of this event.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleReset} className="bg-destructive hover:bg-destructive/80">Erase Timeline</AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          <div className="absolute top-0 right-0 flex items-center gap-2">
+            <Button variant="outline" size="sm" className="border-amber/30 text-amber/80 hover:bg-amber/10 hover:text-amber" onClick={() => setTimeModalOpen(true)}>
+                <Clock className="mr-2 h-4 w-4" /> Manipulate Time
+            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" size="sm" className="border-amber/30 text-amber/80 hover:bg-amber/10 hover:text-amber">
+                  <RotateCcw className="mr-2 h-4 w-4" /> Reset
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you sure you want to revert time?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone. Your current timeline will be permanently erased, and you will return to the beginning of this event.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleReset} className="bg-destructive hover:bg-destructive/80">Erase Timeline</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 xl:gap-8 h-full flex-grow">

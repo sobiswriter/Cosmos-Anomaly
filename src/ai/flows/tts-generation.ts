@@ -64,7 +64,7 @@ const generateSpeechFlow = ai.defineFlow(
         responseModalities: ['AUDIO'],
         speechConfig: {
           voiceConfig: {
-            prebuiltVoiceConfig: {voiceName: 'en-US-Standard-D'}, // A deep, resonant voice
+            prebuiltVoiceConfig: {voiceName: 'zubenelgenubi'}, // A deep, resonant voice
           },
         },
       },

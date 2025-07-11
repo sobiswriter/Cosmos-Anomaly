@@ -21,6 +21,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Toaster } from '@/components/ui/toaster';
 import { useToast } from '@/hooks/use-toast';
 
+const MILESTONE_FLAG = '[MILESTONE_EVENT]';
+
 export default function ChronosAnomalyClient() {
   const [currentNode, setCurrentNode] = useState<StoryNode>(story.start);
   const [timeline, setTimeline] = useLocalStorage<TimelineEvent[]>('chronos-timeline', []);
@@ -46,11 +48,22 @@ export default function ChronosAnomalyClient() {
       setImageUrl('');
       setCommentary('');
       
-      const [narrativeResult, imageResult, commentaryResult] = await Promise.all([
-        generateNarrative({ choice: choice.text, previousNarrative }),
-        generateImage({ narrativeMoment: nextNode.imagePrompt }),
+      const narrativeResult = await generateNarrative({ choice: choice.text, previousNarrative });
+
+      let finalNarrative = narrativeResult.narrative;
+      let imagePrompt = nextNode.imagePrompt;
+
+      if(finalNarrative.startsWith(MILESTONE_FLAG)) {
+        imagePrompt = finalNarrative.replace(MILESTONE_FLAG, '').trim();
+        // We can keep the flag or remove it from the displayed narrative. 
+        // For now, let's remove it for a cleaner look.
+        finalNarrative = imagePrompt;
+      }
+
+      const [imageResult, commentaryResult] = await Promise.all([
+        generateImage({ narrativeMoment: imagePrompt }),
         getWatcherCommentary({
-          timelineEvent: `User chose to '${choice.text}'. This led to a state described as: '${nextNode.narrative}'.`,
+          timelineEvent: `User chose to '${choice.text}'. This led to a state described as: '${finalNarrative}'.`,
           userChoice: choice.text,
           currentTimeline: timeline.map(t => t.choiceMade).join(' -> '),
         })
@@ -60,13 +73,13 @@ export default function ChronosAnomalyClient() {
         id: timeline.length + 1,
         timestamp: new Date().toISOString(),
         choiceMade: choice.text,
-        generatedNarrative: narrativeResult.narrative,
+        generatedNarrative: finalNarrative,
         imageUrl: imageResult.imageUrl,
         watcherCommentary: commentaryResult.commentary,
       };
 
       setTimeline(prev => [...prev, newTimelineEvent]);
-      setNarrative(narrativeResult.narrative);
+      setNarrative(finalNarrative);
       setImageUrl(imageResult.imageUrl);
       setCommentary(commentaryResult.commentary);
       setCurrentNode(nextNode);
@@ -92,12 +105,32 @@ export default function ChronosAnomalyClient() {
       try {
         if(timeline.length > 0) {
           const lastEvent = timeline[timeline.length - 1];
-          const lastChoice = lastEvent.choiceMade;
-          const lastNodeId = Object.values(story).find(node => node.choices.some(c => c.text === lastChoice))?.choices.find(c => c.text === lastChoice)?.nextNodeId;
-
+          // Find the node that resulted from the last choice
+          let lastNodeId: string | undefined = undefined;
+          for (const key in story) {
+              const node = story[key];
+              const foundChoice = node.choices.find(c => c.text === lastEvent.choiceMade);
+              if (foundChoice) {
+                  lastNodeId = foundChoice.nextNodeId;
+                  break;
+              }
+          }
+          
           if (lastNodeId && story[lastNodeId]) {
             setCurrentNode(story[lastNodeId]);
+          } else {
+            // This can happen if the story structure changes or if the last choice leads to an end node.
+            // Let's try to find the node that *made* the choice.
+            const originNodeKey = Object.keys(story).find(key => story[key].choices.some(c => c.text === lastEvent.choiceMade));
+            if(originNodeKey) {
+                const originNode = story[originNodeKey];
+                const choice = originNode.choices.find(c => c.text === lastEvent.choiceMade);
+                if (choice && story[choice.nextNodeId]) {
+                    setCurrentNode(story[choice.nextNodeId]);
+                }
+            }
           }
+
           setNarrative(lastEvent.generatedNarrative);
           setImageUrl(lastEvent.imageUrl);
           setCommentary(lastEvent.watcherCommentary);
@@ -106,6 +139,7 @@ export default function ChronosAnomalyClient() {
           setCommentary("The Watcher is observing. Make your first move.");
           const imageResult = await generateImage({ narrativeMoment: story.start.imagePrompt });
           setImageUrl(imageResult.imageUrl);
+          setNarrative(story.start.narrative);
         }
       } catch (error) {
         console.error("Initialization Error:", error);

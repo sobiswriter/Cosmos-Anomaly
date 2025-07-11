@@ -12,7 +12,7 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const GenerateImageInputSchema = z.object({
-  narrativeMoment: z.string().describe('A description of the key narrative moment to visualize.'),
+  narrativeMoment: z.string().describe('A descriptive prompt of the milestone event to visualize.'),
 });
 export type GenerateImageInput = z.infer<typeof GenerateImageInputSchema>;
 
@@ -25,23 +25,6 @@ export async function generateImage(input: GenerateImageInput): Promise<Generate
   return generateImageFlow(input);
 }
 
-const generateImagePrompt = ai.definePrompt({
-  name: 'generateImagePrompt',
-  input: {schema: GenerateImageInputSchema},
-  output: {schema: GenerateImageOutputSchema},
-  prompt: `You are the Artisan, an AI that generates images based on narrative moments.
-
-  Generate a single photorealistic image that captures the essence of the following narrative moment:
-  {{{narrativeMoment}}}
-
-  Ensure the image aligns with the Dark Neo-Noir meets Celestial Observatory visual style, using a dark, high-contrast color palette.
-  Primary UI elements must be glowing and ethereal, using cyan for neutral/interactive elements and amber for critical information or Watcher commentary.
-  Incorporate a subtle, persistent film grain post-processing effect.
-
-  Return the image as a data URI.
-  `,
-});
-
 const generateImageFlow = ai.defineFlow(
   {
     name: 'generateImageFlow',
@@ -51,7 +34,7 @@ const generateImageFlow = ai.defineFlow(
   async input => {
     const {media} = await ai.generate({
       model: 'googleai/gemini-2.0-flash-preview-image-generation',
-      prompt: input.narrativeMoment,
+      prompt: `Generate a stylized, high-contrast, dark neo-noir image with ethereal, glowing UI elements (cyan for neutral, amber for critical) and a persistent film grain effect based on this description: ${input.narrativeMoment}`,
       config: {
         responseModalities: ['TEXT', 'IMAGE'],
       },

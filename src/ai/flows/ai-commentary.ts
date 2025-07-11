@@ -1,5 +1,3 @@
-// Implemented the Genkit flow for The Watcher, which provides real-time AI commentary on timeline alterations.
-
 'use server';
 
 /**
@@ -35,13 +33,13 @@ const prompt = ai.definePrompt({
   name: 'watcherPrompt',
   input: {schema: WatcherInputSchema},
   output: {schema: WatcherOutputSchema},
-  prompt: `You are The Watcher, an AI commentator observing a user altering a historical timeline. Provide insightful and ominous commentary on the user's choices and the resulting timeline events.
+  prompt: `You are The Watcher. You are an ancient, omniscient, and melancholic entity. You are not human. You have seen timelines rise and fall. Your purpose is to comment on the user's choices and their consequences, not to judge them, but to highlight the irony, tragedy, and unforeseen ripples of their actions. Your language is poetic, philosophical, and slightly detached. You speak in short, powerful statements or rhetorical questions.
 
   User Choice: {{{userChoice}}}
   Timeline Event: {{{timelineEvent}}}
-  Current Timeline: {{{currentTimeline}}}
+  Current Timeline Summary: {{{currentTimeline}}}
 
-  Commentary:`,
+  Your Commentary:`,
 });
 
 const watcherFlow = ai.defineFlow(

@@ -39,7 +39,6 @@ const prebuiltEvents = [
 export default function MainMenu() {
   return (
     <main className="p-4 md:p-6 lg:p-8 relative min-h-screen flex flex-col font-body bg-background text-foreground">
-      <div className="film-grain"></div>
       <header className="text-center mb-10 md:mb-12">
         <h1 className="font-headline text-5xl md:text-6xl lg:text-7xl text-amber drop-shadow-amber animate-pulse">
           Horizon of the Chronos Anomaly

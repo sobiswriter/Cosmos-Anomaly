@@ -4,7 +4,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Eye, History, Loader2, RotateCcw, ThumbsUp, ThumbsDown, Clock } from 'lucide-react';
+import { Eye, History, Loader2, RotateCcw, ThumbsUp, ThumbsDown, Clock, Volume2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { type Choice } from '@/lib/story';
 import { type TimelineEvent } from '@/lib/types';
@@ -71,6 +71,14 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
       audioRef.current.play().catch(e => console.error("Audio playback failed:", e));
     }
   }, [watcherAudioUrl]);
+
+  const handleReplayAudio = useCallback(() => {
+    if (audioRef.current && watcherAudioUrl) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().catch(e => console.error("Audio replay failed:", e));
+    }
+  }, [watcherAudioUrl]);
+
 
   const isCustomChoice = (choiceText: string) => {
     const lowerCaseText = choiceText.toLowerCase();
@@ -302,8 +310,20 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
           <div className="lg:col-span-1 flex flex-col gap-6 order-3 lg:order-1">
             <Card className="bg-card/50 backdrop-blur-sm border-amber/20">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 font-headline text-amber">
-                  <Eye className="w-5 h-5" /> The Watcher's Gaze
+                <CardTitle className="flex items-center justify-between gap-2 font-headline text-amber">
+                   <span className="flex items-center gap-2">
+                    <Eye className="w-5 h-5" /> The Watcher's Gaze
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleReplayAudio}
+                    disabled={!watcherAudioUrl || isLoading}
+                    className="w-8 h-8 text-amber/70 hover:bg-amber/10 hover:text-amber"
+                    aria-label="Replay commentary"
+                  >
+                    <Volume2 className="w-5 h-5" />
+                  </Button>
                 </CardTitle>
               </CardHeader>
               <CardContent>

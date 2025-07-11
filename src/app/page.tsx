@@ -33,6 +33,33 @@ const prebuiltEvents = [
     aiHint: 'ancient library',
     initialChoice: "Prevent the destruction of the Library of Alexandria.",
     imagePrompt: "A grand, sprawling ancient library filled with scholars, scrolls, and celestial models, light streaming through marble columns. Ethereal, neo-noir lighting."
+  },
+  {
+    id: 'newton',
+    title: 'The Unseen Force',
+    description: "What if the apple never fell? A world where Newton's laws of universal gravitation remained undiscovered for centuries, leading to a vastly different scientific and technological path for humanity.",
+    image: 'https://placehold.co/600x400/100818/FFBF00.png',
+    aiHint: 'scientific instruments',
+    initialChoice: "Ensure the apple never falls on Isaac Newton, delaying the discovery of universal gravitation.",
+    imagePrompt: "An ornate, complex astrolabe and other bizarre scientific instruments on a wooden desk, lit by candlelight. Steampunk, neo-noir style."
+  },
+  {
+    id: 'axis-victory',
+    title: 'The Thousand-Year Shadow',
+    description: "A chilling alternate reality where the Axis powers were victorious in WWII. Explore a world under totalitarian rule, where resistance is a whisper and technology serves oppression.",
+    image: 'https://placehold.co/600x400/100818/7DF9FF.png',
+    aiHint: 'dystopian city',
+    initialChoice: "Ensure the Axis powers win World War II.",
+    imagePrompt: "A colossal, brutalist monument draped with authoritarian flags looms over a dark, oppressive city. Neo-noir, dystopian, high-contrast style."
+  },
+  {
+    id: 'british-raj',
+    title: 'The Unbroken Raj',
+    description: "What if the British Empire never relinquished control over India? Witness a timeline where the jewel in the crown never faded, altering the fate of billions and the geopolitical landscape of the 21st century.",
+    image: 'https://placehold.co/600x400/100818/FFBF00.png',
+    aiHint: 'colonial india',
+    initialChoice: "Prevent the independence of India, ensuring the British Raj continues indefinitely.",
+    imagePrompt: "A grand colonial-era palace in New Delhi, blending British and Mughal architecture, with Union Jack flags flying alongside modern technology. Ethereal, neo-noir."
   }
 ];
 

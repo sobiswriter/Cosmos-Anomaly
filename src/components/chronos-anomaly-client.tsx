@@ -33,8 +33,6 @@ export default function ChronosAnomalyClient() {
   const [isMounted, setIsMounted] = useState(false);
   const { toast } = useToast();
   
-  // This effect runs once on mount to set the isMounted flag.
-  // It's crucial for preventing hydration errors with useLocalStorage.
   useEffect(() => {
     setIsMounted(true);
   }, []);
@@ -43,7 +41,6 @@ export default function ChronosAnomalyClient() {
     setIsLoading(true);
 
     try {
-      // Find the next story node based on the user's choice.
       const nextNode = story[choice.nextNodeId];
       if (!nextNode) {
         throw new Error("Story path not found.");
@@ -52,7 +49,6 @@ export default function ChronosAnomalyClient() {
       const previousNarrative = narrative;
       setCurrentNode(nextNode);
 
-      // Clear previous generated content for better UX
       setNarrative("Recalibrating timeline...");
       setImageUrl('');
       setCommentary('');
@@ -62,14 +58,11 @@ export default function ChronosAnomalyClient() {
       let finalNarrative = narrativeResult.narrative;
       let imagePrompt : string | undefined = undefined;
 
-      // Check for the milestone flag to trigger a specific image generation.
       if(finalNarrative.startsWith(MILESTONE_FLAG)) {
         imagePrompt = finalNarrative.replace(MILESTONE_FLAG, '').trim();
-        // The narrative shown to the user should not include the flag.
         finalNarrative = imagePrompt;
       }
 
-      // If no milestone, use the predefined prompt from the story node.
       if (!imagePrompt) {
         imagePrompt = nextNode.imagePrompt || "An abstract representation of fate and choice.";
       }
@@ -84,7 +77,7 @@ export default function ChronosAnomalyClient() {
       ]);
 
       const newTimelineEvent: TimelineEvent = {
-        id: Date.now(), // Use a more unique ID
+        id: Date.now(),
         timestamp: new Date().toISOString(),
         choiceMade: choice.text,
         generatedNarrative: finalNarrative,
@@ -105,7 +98,6 @@ export default function ChronosAnomalyClient() {
         title: "Temporal Anomaly Detected",
         description: "Failed to connect with the Consequence Engine. Please try again.",
       });
-      // Revert to previous state if something goes wrong
       const lastEvent = timeline[timeline.length - 1];
       if (lastEvent) {
         setNarrative(lastEvent.generatedNarrative);
@@ -121,7 +113,6 @@ export default function ChronosAnomalyClient() {
   };
   
   useEffect(() => {
-    // Only run this logic on the client after the component has mounted.
     if (!isMounted) return;
 
     const initialize = async () => {
@@ -149,7 +140,6 @@ export default function ChronosAnomalyClient() {
           title: "Initialization Failed",
           description: "Could not render the initial timeline state.",
         });
-        // Reset to default state on error
         setTimeline([]);
         setCurrentNode(story.start);
         setNarrative(story.start.narrative);

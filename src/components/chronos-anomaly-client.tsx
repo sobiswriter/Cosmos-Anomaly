@@ -66,12 +66,12 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
     return CUSTOM_CHOICE_KEYWORDS.some(keyword => lowerCaseText.includes(keyword));
   };
   
-  const processChoice = async (choice: { text: string }) => {
+  const processChoice = async (choice: { text: string }, isReset: boolean = false) => {
     setIsLoading(true);
     setCustomChoiceModalOpen(false);
 
     try {
-      const previousNarrative = narrativeData.narrative;
+      const previousNarrative = isReset ? undefined : narrativeData.narrative;
       
       setNarrativeData({ narrative: "Recalibrating timeline..."});
       setImageUrl('');
@@ -88,16 +88,12 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
       if (narrativeResult.narrative.includes(MILESTONE_FLAG)) {
         isMilestone = true;
         const parts = narrativeResult.narrative.split(MILESTONE_FLAG);
-        displayNarrative = parts[0].trim();
         const milestoneContent = parts.length > 1 ? parts[1].trim() : '';
+        displayNarrative = parts[0].trim() || milestoneContent;
         imagePrompt = milestoneContent;
         milestoneNarrativeForModal = milestoneContent;
-
-        if (!displayNarrative) {
-          displayNarrative = milestoneContent;
-        }
       }
-
+      
       if (narrativeResult.timeline && displayNarrative.startsWith(narrativeResult.timeline)) {
         displayNarrative = displayNarrative.substring(narrativeResult.timeline.length).replace(/^[\.\s]*/, '').trim();
       }
@@ -109,7 +105,7 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
       const commentaryInput = {
         timelineEvent: displayNarrative,
         userChoice: choice.text,
-        currentTimeline: timeline.map(t => t.choiceMade).join(' -> '),
+        currentTimeline: isReset ? "" : timeline.map(t => t.choiceMade).join(' -> '),
       };
 
       const [imageResult, commentaryResult] = await Promise.all([
@@ -129,7 +125,7 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
         choices: narrativeResult.choices || [], 
       };
 
-      setTimeline(prev => [...prev, newTimelineEvent]);
+      setTimeline(prev => isReset ? [newTimelineEvent] : [...prev, newTimelineEvent]);
       setNarrativeData(updatedNarrativeResult);
       setImageUrl(imageResult.imageUrl);
       setCommentary(commentaryResult.commentary);
@@ -170,8 +166,7 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
   const handleReset = useCallback(async () => {
     setIsLoading(true);
     try {
-      setTimeline([]);
-      await processChoice({ text: initialChoice });
+      await processChoice({ text: initialChoice }, true);
 
       toast({
         title: "Timeline Reset",
@@ -188,7 +183,7 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
       setIsLoading(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [setTimeline, toast, initialChoice]);
+  }, [toast, initialChoice]);
   
   useEffect(() => {
     if (!isMounted) return;
@@ -225,7 +220,7 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
   const reversedTimeline = useMemo(() => [...timeline].reverse(), [timeline]);
 
   const getEventIdForAccordion = (event: TimelineEvent, index: number) => {
-    const totalEvents = timeline.length;
+    const totalEvents = reversedTimeline.length;
     const eventNumber = totalEvents - index;
     const shortChoice = event.choiceMade.length > 30 ? `${event.choiceMade.substring(0, 27)}...` : event.choiceMade;
     return `Event ${eventNumber}: ${shortChoice}`;

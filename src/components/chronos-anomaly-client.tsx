@@ -89,21 +89,18 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
         isMilestone = true;
         const parts = narrativeResult.narrative.split(MILESTONE_FLAG);
         displayNarrative = parts[0].trim();
-        const milestoneContent = parts[1].trim();
+        const milestoneContent = parts.length > 1 ? parts[1].trim() : '';
         imagePrompt = milestoneContent;
         milestoneNarrativeForModal = milestoneContent;
 
-        // If the main narrative part is empty, use the milestone content as the narrative.
         if (!displayNarrative) {
           displayNarrative = milestoneContent;
         }
       }
 
-      // Clean up the narrative: remove potential year prefix.
       if (narrativeResult.timeline && displayNarrative.startsWith(narrativeResult.timeline)) {
-        displayNarrative = displayNarrative.substring(narrativeResult.timeline.length).replace(/^\.\s*/, '').trim();
+        displayNarrative = displayNarrative.substring(narrativeResult.timeline.length).replace(/^[\.\s]*/, '').trim();
       }
-
 
       if (!imagePrompt) {
         imagePrompt = `An abstract representation of the following event: ${displayNarrative}`;
@@ -392,7 +389,7 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
                           <div className='space-y-2'>
                             <h3 className='font-headline text-lg text-green-400 flex items-center gap-2'><ThumbsUp className='w-5 h-5' /> Positive Consequences</h3>
                             <ul className='list-disc list-inside text-muted-foreground space-y-1 text-sm'>
-                              {narrativeData.positive_consequences.map((item, i) => <li key={i}>{item}</li>)}
+                              {narrativeData.positive_consequences.map((item, i) => <li key={i}>{item.replace(/^[\*\-]\s*/, '')}</li>)}
                             </ul>
                           </div>
                         )}
@@ -400,7 +397,7 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
                           <div className='space-y-2'>
                             <h3 className='font-headline text-lg text-red-400 flex items-center gap-2'><ThumbsDown className='w-5 h-5' /> Negative Consequences</h3>
                              <ul className='list-disc list-inside text-muted-foreground space-y-1 text-sm'>
-                              {narrativeData.negative_consequences.map((item, i) => <li key={i}>{item}</li>)}
+                              {narrativeData.negative_consequences.map((item, i) => <li key={i}>{item.replace(/^[\*\-]\s*/, '')}</li>)}
                             </ul>
                           </div>
                         )}

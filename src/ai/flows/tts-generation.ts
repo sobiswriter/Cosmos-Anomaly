@@ -59,13 +59,17 @@ const generateSpeechFlow = ai.defineFlow(
     outputSchema: GenerateSpeechOutputSchema,
   },
   async ({text}) => {
+    // Choose randomly between a deep male voice (Charon) and a mature female voice (Gacrux)
+    const watcherVoices = ['Charon', 'Gacrux'];
+    const selectedVoice = watcherVoices[Math.floor(Math.random() * watcherVoices.length)];
+
     const {media} = await ai.generate({
       model: googleAI.model('gemini-2.5-flash-preview-tts'),
       config: {
         responseModalities: ['AUDIO'],
         speechConfig: {
           voiceConfig: {
-            prebuiltVoiceConfig: {voiceName: 'zubenelgenubi'}, // A deep, resonant voice
+            prebuiltVoiceConfig: {voiceName: selectedVoice},
           },
         },
       },

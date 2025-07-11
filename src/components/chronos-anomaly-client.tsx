@@ -9,7 +9,7 @@ import { story, StoryNode, Choice } from '@/lib/story';
 import { type TimelineEvent } from '@/lib/types';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 
-import { generateNarrative } from '@/ai/flows/narrative-generation';
+import { generateNarrative, type GenerateNarrativeOutput } from '@/ai/flows/narrative-generation';
 import { generateImage } from '@/ai/flows/asset-generation';
 import { getWatcherCommentary } from '@/ai/flows/ai-commentary';
 
@@ -30,7 +30,12 @@ export default function ChronosAnomalyClient() {
   const [imageUrl, setImageUrl] = useState<string>('');
   const [commentary, setCommentary] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isMounted, setIsMounted] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const handleSelectChoice = async (choice: Choice) => {
     setIsLoading(true);
@@ -42,22 +47,23 @@ export default function ChronosAnomalyClient() {
       }
 
       const previousNarrative = narrative;
+      setCurrentNode(nextNode);
 
       // Clear previous generated content for better UX
       setNarrative("Recalibrating timeline...");
       setImageUrl('');
       setCommentary('');
       
-      const narrativeResult = await generateNarrative({ choice: choice.text, previousNarrative });
+      const narrativeResult : GenerateNarrativeOutput = await generateNarrative({ choice: choice.text, previousNarrative });
 
       let finalNarrative = narrativeResult.narrative;
-      let imagePrompt = nextNode.imagePrompt;
+      let imagePrompt : string;
 
       if(finalNarrative.startsWith(MILESTONE_FLAG)) {
         imagePrompt = finalNarrative.replace(MILESTONE_FLAG, '').trim();
-        // We can keep the flag or remove it from the displayed narrative. 
-        // For now, let's remove it for a cleaner look.
         finalNarrative = imagePrompt;
+      } else {
+        imagePrompt = nextNode.imagePrompt || "An abstract representation of fate and choice.";
       }
 
       const [imageResult, commentaryResult] = await Promise.all([
@@ -82,7 +88,6 @@ export default function ChronosAnomalyClient() {
       setNarrative(finalNarrative);
       setImageUrl(imageResult.imageUrl);
       setCommentary(commentaryResult.commentary);
-      setCurrentNode(nextNode);
 
     } catch (error) {
       console.error("Failed to process choice:", error);
@@ -100,46 +105,35 @@ export default function ChronosAnomalyClient() {
   };
   
   useEffect(() => {
+    if (!isMounted) return;
+
     const initialize = async () => {
       setIsLoading(true);
       try {
         if(timeline.length > 0) {
           const lastEvent = timeline[timeline.length - 1];
+          let lastNode: StoryNode | undefined = undefined;
+
           // Find the node that resulted from the last choice
-          let lastNodeId: string | undefined = undefined;
           for (const key in story) {
-              const node = story[key];
-              const foundChoice = node.choices.find(c => c.text === lastEvent.choiceMade);
-              if (foundChoice) {
-                  lastNodeId = foundChoice.nextNodeId;
-                  break;
-              }
-          }
-          
-          if (lastNodeId && story[lastNodeId]) {
-            setCurrentNode(story[lastNodeId]);
-          } else {
-            // This can happen if the story structure changes or if the last choice leads to an end node.
-            // Let's try to find the node that *made* the choice.
-            const originNodeKey = Object.keys(story).find(key => story[key].choices.some(c => c.text === lastEvent.choiceMade));
-            if(originNodeKey) {
-                const originNode = story[originNodeKey];
-                const choice = originNode.choices.find(c => c.text === lastEvent.choiceMade);
-                if (choice && story[choice.nextNodeId]) {
-                    setCurrentNode(story[choice.nextNodeId]);
-                }
+            const node = story[key];
+            const foundChoice = node.choices?.find(c => c.text === lastEvent.choiceMade);
+            if (foundChoice && story[foundChoice.nextNodeId]) {
+              lastNode = story[foundChoice.nextNodeId];
+              break;
             }
           }
-
+          
+          setCurrentNode(lastNode || story.start);
           setNarrative(lastEvent.generatedNarrative);
           setImageUrl(lastEvent.imageUrl);
           setCommentary(lastEvent.watcherCommentary);
 
         } else {
           setCommentary("The Watcher is observing. Make your first move.");
+          setNarrative(story.start.narrative);
           const imageResult = await generateImage({ narrativeMoment: story.start.imagePrompt });
           setImageUrl(imageResult.imageUrl);
-          setNarrative(story.start.narrative);
         }
       } catch (error) {
         console.error("Initialization Error:", error);
@@ -148,13 +142,18 @@ export default function ChronosAnomalyClient() {
           title: "Initialization Failed",
           description: "Could not render the initial timeline state.",
         });
+        // Reset to default state on error
+        setTimeline([]);
+        setCurrentNode(story.start);
+        setNarrative(story.start.narrative);
+        setCommentary("The timeline is unstable. A fresh start.");
       } finally {
         setIsLoading(false);
       }
     };
     initialize();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isMounted]);
 
   const reversedTimeline = useMemo(() => [...timeline].reverse(), [timeline]);
 
@@ -188,7 +187,7 @@ export default function ChronosAnomalyClient() {
                       transition={{ duration: 0.5 }}
                       className="text-amber/80 italic text-sm leading-relaxed"
                     >
-                      {commentary || "..."}
+                      {isLoading && !commentary ? "..." : commentary}
                     </motion.p>
                   </AnimatePresence>
                 </ScrollArea>
@@ -203,21 +202,24 @@ export default function ChronosAnomalyClient() {
               </CardHeader>
               <CardContent className="flex-grow overflow-hidden">
                 <ScrollArea className="h-full pr-4">
-                  <Accordion type="single" collapsible className="w-full">
-                    {reversedTimeline.length > 0 ? (
-                      reversedTimeline.map((event) => (
-                        <AccordionItem key={event.id} value={`item-${event.id}`}>
-                          <AccordionTrigger className="text-left">Event {event.id}: {event.choiceMade}</AccordionTrigger>
-                          <AccordionContent className="space-y-2">
-                            <p className="text-sm text-muted-foreground">{event.generatedNarrative}</p>
-                            <p className="text-xs italic text-amber/60">Watcher: "{event.watcherCommentary}"</p>
-                          </AccordionContent>
-                        </AccordionItem>
-                      ))
-                    ) : (
-                      <p className="text-center text-muted-foreground text-sm py-8">The timeline is pristine. For now.</p>
-                    )}
-                  </Accordion>
+                 {isMounted && (
+                    <Accordion type="single" collapsible className="w-full">
+                      {reversedTimeline.length > 0 ? (
+                        reversedTimeline.map((event) => (
+                          <AccordionItem key={event.id} value={`item-${event.id}`}>
+                            <AccordionTrigger className="text-left">Event {event.id}: {event.choiceMade}</AccordionTrigger>
+                            <AccordionContent className="space-y-2">
+                              <p className="text-sm text-muted-foreground">{event.generatedNarrative}</p>
+                              <p className="text-xs italic text-amber/60">Watcher: "{event.watcherCommentary}"</p>
+                            </AccordionContent>
+                          </AccordionItem>
+                        ))
+                      ) : (
+                        <p className="text-center text-muted-foreground text-sm py-8">The timeline is pristine. For now.</p>
+                      )}
+                    </Accordion>
+                  )}
+                  {!isMounted && <div className="text-center text-muted-foreground text-sm py-8">Loading timeline...</div>}
                 </ScrollArea>
               </CardContent>
             </Card>
@@ -231,7 +233,7 @@ export default function ChronosAnomalyClient() {
                   <Skeleton className="w-full h-full" />
                 ) : (
                   <motion.div
-                    key={imageUrl}
+                    key={imageUrl || 'placeholder'}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ duration: 1.0 }}
@@ -239,11 +241,12 @@ export default function ChronosAnomalyClient() {
                   >
                     <Image
                       src={imageUrl || "https://placehold.co/1280x720/100818/100818.png"}
-                      alt={currentNode.imagePrompt}
+                      alt={currentNode?.imagePrompt || "Awaiting temporal scan..."}
                       width={1280}
                       height={720}
                       className="object-cover w-full h-full"
                       data-ai-hint="celestial history"
+                      priority
                     />
                   </motion.div>
                 )}
@@ -267,16 +270,16 @@ export default function ChronosAnomalyClient() {
                       transition={{ duration: 0.8 }}
                       className="text-base md:text-lg leading-loose"
                     >
-                      {narrative}
+                      {isLoading && !narrative ? '...' : narrative}
                     </motion.p>
                   </AnimatePresence>
                 )}
               </ScrollArea>
               
               <div className="space-y-3">
-                {currentNode.choices.length > 0 && <p className="text-center font-headline text-primary drop-shadow-cyan">What is your will?</p>}
+                {currentNode?.choices?.length > 0 && <p className="text-center font-headline text-primary drop-shadow-cyan">What is your will?</p>}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {currentNode.choices.map((choice) => (
+                  {currentNode?.choices?.map((choice) => (
                     <Button
                       key={choice.text}
                       variant="outline"

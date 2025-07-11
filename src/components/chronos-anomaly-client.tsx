@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -5,7 +6,7 @@ import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, History, Loader2, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { story, StoryNode, Choice } from '@/lib/story';
+import { story, type StoryNode, type Choice } from '@/lib/story';
 import { type TimelineEvent } from '@/lib/types';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 
@@ -32,54 +33,56 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Toaster } from '@/components/ui/toaster';
 import { useToast } from '@/hooks/use-toast';
 import MilestoneModal from '@/components/milestone-modal';
+import Link from 'next/link';
 
 const MILESTONE_FLAG = '[MILESTONE_EVENT]';
 
-export default function ChronosAnomalyClient() {
-  const [currentNode, setCurrentNode] = useState<StoryNode>(story.start);
-  const [timeline, setTimeline] = useLocalStorage<TimelineEvent[]>('chronos-timeline', []);
-  const [narrative, setNarrative] = useState<string>(currentNode.narrative);
+interface ChronosAnomalyClientProps {
+  initialChoice: string;
+  initialImagePrompt: string;
+}
+
+export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt }: ChronosAnomalyClientProps) {
+  const [timeline, setTimeline] = useLocalStorage<TimelineEvent[]>(`chronos-timeline-${initialChoice}`, []);
+  const [currentNode, setCurrentNode] = useState<StoryNode | null>(null);
+  const [narrative, setNarrative] = useState<string>('');
   const [imageUrl, setImageUrl] = useState<string>('');
   const [commentary, setCommentary] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isMounted, setIsMounted] = useState(false);
   const { toast } = useToast();
   const [milestoneEvent, setMilestoneEvent] = useState<{imageUrl: string; narrative: string} | null>(null);
+  const [choices, setChoices] = useState<Choice[]>([]);
   
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  const handleSelectChoice = async (choice: Choice) => {
+  const handleSelectChoice = async (choice: Choice | { text: string }) => {
     setIsLoading(true);
 
     try {
-      const nextNode = story[choice.nextNodeId];
-      if (!nextNode) {
-        throw new Error("Story path not found.");
-      }
-
       const previousNarrative = narrative;
-      setCurrentNode(nextNode);
-
+      
       setNarrative("Recalibrating timeline...");
       setImageUrl('');
       setCommentary('');
-      
+      setChoices([]);
+
       const narrativeResult : GenerateNarrativeOutput = await generateNarrative({ choice: choice.text, previousNarrative });
 
       let finalNarrative = narrativeResult.narrative;
       let imagePrompt : string | undefined = undefined;
       let isMilestone = false;
 
-      if(finalNarrative.startsWith(MILESTONE_FLAG)) {
+      if (finalNarrative.startsWith(MILESTONE_FLAG)) {
         imagePrompt = finalNarrative.replace(MILESTONE_FLAG, '').trim();
         finalNarrative = imagePrompt;
         isMilestone = true;
       }
 
       if (!imagePrompt) {
-        imagePrompt = nextNode.imagePrompt || "An abstract representation of fate and choice.";
+        imagePrompt = "An abstract representation of fate and choice.";
       }
 
       const [imageResult, commentaryResult] = await Promise.all([
@@ -98,13 +101,15 @@ export default function ChronosAnomalyClient() {
         generatedNarrative: finalNarrative,
         imageUrl: imageResult.imageUrl,
         watcherCommentary: commentaryResult.commentary,
-        nodeId: choice.nextNodeId,
+        // We don't have static nodes anymore, so we store the choices for potential future use
+        choices: narrativeResult.choices || [], 
       };
 
       setTimeline(prev => [...prev, newTimelineEvent]);
       setNarrative(finalNarrative);
       setImageUrl(imageResult.imageUrl);
       setCommentary(commentaryResult.commentary);
+      setChoices(narrativeResult.choices || []);
 
       if (isMilestone) {
         setMilestoneEvent({ imageUrl: imageResult.imageUrl, narrative: finalNarrative });
@@ -122,13 +127,9 @@ export default function ChronosAnomalyClient() {
         setNarrative(lastEvent.generatedNarrative);
         setImageUrl(lastEvent.imageUrl);
         setCommentary(lastEvent.watcherCommentary);
-        const lastNode = story[lastEvent.nodeId] || story.start;
-        setCurrentNode(lastNode);
+        setChoices(lastEvent.choices);
       } else {
-        setCurrentNode(story.start);
-        setNarrative(story.start.narrative);
-        setImageUrl('');
-        setCommentary('');
+        // This case is handled by initialization
       }
     } finally {
       setIsLoading(false);
@@ -139,11 +140,9 @@ export default function ChronosAnomalyClient() {
     setIsLoading(true);
     try {
       setTimeline([]);
-      setCurrentNode(story.start);
-      setNarrative(story.start.narrative);
-      setCommentary("The timeline is pristine once more. A clean slate.");
-      const imageResult = await generateImage({ narrativeMoment: story.start.imagePrompt });
-      setImageUrl(imageResult.imageUrl);
+      // Instead of going to a "start" node, we re-trigger the initial choice
+      await handleSelectChoice({ text: initialChoice });
+
       toast({
         title: "Timeline Reset",
         description: "The echoes of your choices have faded.",
@@ -158,7 +157,7 @@ export default function ChronosAnomalyClient() {
     } finally {
       setIsLoading(false);
     }
-  }, [setTimeline, toast]);
+  }, [setTimeline, toast, initialChoice]);
   
   useEffect(() => {
     if (!isMounted) return;
@@ -166,20 +165,16 @@ export default function ChronosAnomalyClient() {
     const initialize = async () => {
       setIsLoading(true);
       try {
-        if(timeline.length > 0) {
+        if (timeline.length > 0) {
           const lastEvent = timeline[timeline.length - 1];
-          const lastNode = story[lastEvent.nodeId] || story.start;
-          
-          setCurrentNode(lastNode);
           setNarrative(lastEvent.generatedNarrative);
           setImageUrl(lastEvent.imageUrl);
           setCommentary(lastEvent.watcherCommentary);
-
+          setChoices(lastEvent.choices);
         } else {
-          setCommentary("The Watcher is observing. Make your first move.");
-          setNarrative(story.start.narrative);
-          const imageResult = await generateImage({ narrativeMoment: story.start.imagePrompt });
-          setImageUrl(imageResult.imageUrl);
+          // This is a new timeline, start from the beginning
+          setCommentary("The Watcher is observing. The first choice has been made.");
+          await handleSelectChoice({ text: initialChoice });
         }
       } catch (error) {
         console.error("Initialization Error:", error);
@@ -189,16 +184,13 @@ export default function ChronosAnomalyClient() {
           description: "Could not render the initial timeline state.",
         });
         setTimeline([]);
-        setCurrentNode(story.start);
-        setNarrative(story.start.narrative);
-        setCommentary("The timeline is unstable. A fresh start.");
       } finally {
         setIsLoading(false);
       }
     };
     initialize();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isMounted]);
+  }, [isMounted, initialChoice]);
 
   const reversedTimeline = useMemo(() => [...timeline].reverse(), [timeline]);
 
@@ -212,6 +204,9 @@ export default function ChronosAnomalyClient() {
       />
       <main className="p-4 md:p-6 lg:p-8 relative min-h-screen flex flex-col font-body">
         <header className="text-center mb-6 md:mb-8 relative">
+           <Link href="/" className="absolute top-0 left-0 text-primary hover:text-amber transition-colors">
+            &larr; Back to Horizon
+          </Link>
           <h1 className="font-headline text-4xl md:text-5xl lg:text-6xl text-amber drop-shadow-amber animate-pulse">
             Chronos Anomaly
           </h1>
@@ -226,7 +221,7 @@ export default function ChronosAnomalyClient() {
               <AlertDialogHeader>
                 <AlertDialogTitle>Are you sure you want to revert time?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  This action cannot be undone. Your current timeline will be permanently erased, and you will return to the beginning of the story.
+                  This action cannot be undone. Your current timeline will be permanently erased, and you will return to the beginning of this event.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -311,7 +306,7 @@ export default function ChronosAnomalyClient() {
                   >
                     <Image
                       src={imageUrl || "https://placehold.co/1280x720/100818/100818.png"}
-                      alt={currentNode?.imagePrompt || "Awaiting temporal scan..."}
+                      alt={"Awaiting temporal scan..."}
                       width={1280}
                       height={720}
                       className="object-cover w-full h-full"
@@ -347,9 +342,9 @@ export default function ChronosAnomalyClient() {
               </ScrollArea>
               
               <div className="space-y-3">
-                {currentNode?.choices?.length > 0 && <p className="text-center font-headline text-primary drop-shadow-cyan">What is your will?</p>}
+                {choices.length > 0 && <p className="text-center font-headline text-primary drop-shadow-cyan">What is your will?</p>}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {currentNode?.choices?.map((choice) => (
+                  {choices.map((choice) => (
                     <Button
                       key={choice.text}
                       variant="outline"

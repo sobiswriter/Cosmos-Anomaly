@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -17,8 +18,13 @@ const GenerateNarrativeInputSchema = z.object({
 });
 export type GenerateNarrativeInput = z.infer<typeof GenerateNarrativeInputSchema>;
 
+const ChoiceSchema = z.object({
+  text: z.string().describe('The text of the choice presented to the user.'),
+});
+
 const GenerateNarrativeOutputSchema = z.object({
-  narrative: z.string().describe('The generated narrative based on the user choice. If a major, visually representable event has occurred, it will be prefixed with the flag [MILESTONE_EVENT] and describe the event in a way that can be used to generate an image or newsreel.'),
+    narrative: z.string().describe('The generated narrative based on the user choice. If a major, visually representable event has occurred, it will be prefixed with the flag [MILESTONE_EVENT] and describe the event in a way that can be used to generate an image or newsreel.'),
+    choices: z.array(ChoiceSchema).min(2).max(2).describe("Two distinct and compelling choices for the user to make to continue the story."),
 });
 export type GenerateNarrativeOutput = z.infer<typeof GenerateNarrativeOutputSchema>;
 
@@ -30,7 +36,7 @@ const prompt = ai.definePrompt({
   name: 'narrativeGenerationPrompt',
   input: {schema: GenerateNarrativeInputSchema},
   output: {schema: GenerateNarrativeOutputSchema},
-  prompt: `You are the Chronicler, a dispassionate, objective historian AI. Your task is to extrapolate the most plausible year-by-year consequences of a major historical alteration. Your tone is factual, dramatic, and grounded. You focus on geopolitical, societal, and technological shifts. Do not editorialize. Your output for each year must be a single, impactful paragraph. When you determine that a major, visually representable event has occurred (a major battle, a political treaty, a cultural shift), you will prefix your output with the flag [MILESTONE_EVENT] and describe the event in a way that can be used to generate an image or newsreel.
+  prompt: `You are the Chronicler, a dispassionate, objective historian AI. Your task is to extrapolate the most plausible year-by-year consequences of a major historical alteration. Your tone is factual, dramatic, and grounded. You focus on geopolitical, societal, and technological shifts. Do not editorialize. Your output for each year must be a single, impactful paragraph. When you determine that a major, visually representable event has occurred (a major battle, a political treaty, a cultural shift), you will prefix your output with the flag [MILESTONE_EVENT] and describe the event in a way that can be used to generate an image or newsreel. After the narrative, you MUST provide two new, distinct, and compelling choices for the user to make to continue the story.
 
   Previous Narrative Context: {{{previousNarrative}}}
 

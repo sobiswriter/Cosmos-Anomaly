@@ -1,3 +1,6 @@
+
+import { Choice } from './story';
+
 export type TimelineEvent = {
   id: number;
   timestamp: string;
@@ -5,5 +8,5 @@ export type TimelineEvent = {
   generatedNarrative: string;
   imageUrl: string;
   watcherCommentary: string;
-  nodeId: string;
+  choices: Choice[];
 };

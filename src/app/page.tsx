@@ -78,18 +78,18 @@ export default function MainMenu() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {prebuiltEvents.map((event) => (
             <Card key={event.id} className="bg-card/50 backdrop-blur-sm border-primary/20 flex flex-col overflow-hidden transform hover:scale-105 hover:border-primary transition-all duration-300">
+              <div className="aspect-video w-full overflow-hidden">
+                <Image
+                    src={event.image}
+                    alt={event.title}
+                    width={600}
+                    height={400}
+                    className="object-cover w-full h-full"
+                    data-ai-hint={event.aiHint}
+                />
+              </div>
               <CardHeader>
-                <div className="aspect-video w-full overflow-hidden rounded-t-lg -mt-6 -mx-6">
-                    <Image
-                        src={event.image}
-                        alt={event.title}
-                        width={600}
-                        height={400}
-                        className="object-cover w-full h-full"
-                        data-ai-hint={event.aiHint}
-                    />
-                </div>
-                <CardTitle className="font-headline text-2xl text-primary pt-4">{event.title}</CardTitle>
+                <CardTitle className="font-headline text-2xl text-primary">{event.title}</CardTitle>
                 <CardDescription className="text-muted-foreground">{event.description}</CardDescription>
               </CardHeader>
               <CardContent className="flex-grow"></CardContent>

@@ -83,15 +83,27 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
       let displayNarrative = narrativeResult.narrative;
       let imagePrompt : string | undefined = undefined;
       let isMilestone = false;
+      let milestoneNarrativeForModal = '';
 
-      if (narrativeResult.narrative.startsWith(MILESTONE_FLAG)) {
-        const milestoneNarrative = narrativeResult.narrative.substring(narrativeResult.narrative.indexOf(MILESTONE_FLAG) + MILESTONE_FLAG.length).trim();
-        const mainNarrative = narrativeResult.narrative.substring(0, narrativeResult.narrative.indexOf(MILESTONE_FLAG)).trim();
-        
-        imagePrompt = milestoneNarrative;
-        displayNarrative = mainNarrative ? mainNarrative : milestoneNarrative; 
+      if (narrativeResult.narrative.includes(MILESTONE_FLAG)) {
         isMilestone = true;
+        const parts = narrativeResult.narrative.split(MILESTONE_FLAG);
+        displayNarrative = parts[0].trim();
+        const milestoneContent = parts[1].trim();
+        imagePrompt = milestoneContent;
+        milestoneNarrativeForModal = milestoneContent;
+
+        // If the main narrative part is empty, use the milestone content as the narrative.
+        if (!displayNarrative) {
+          displayNarrative = milestoneContent;
+        }
       }
+
+      // Clean up the narrative: remove potential year prefix.
+      if (narrativeResult.timeline && displayNarrative.startsWith(narrativeResult.timeline)) {
+        displayNarrative = displayNarrative.substring(narrativeResult.timeline.length).replace(/^\.\s*/, '').trim();
+      }
+
 
       if (!imagePrompt) {
         imagePrompt = `An abstract representation of the following event: ${displayNarrative}`;
@@ -127,7 +139,7 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
       setChoices(narrativeResult.choices || []);
 
       if (isMilestone) {
-        setMilestoneEvent({ imageUrl: imageResult.imageUrl, narrative: imagePrompt });
+        setMilestoneEvent({ imageUrl: imageResult.imageUrl, narrative: milestoneNarrativeForModal });
       }
 
     } catch (error) {
@@ -373,7 +385,7 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
                         {isLoading && !narrativeData?.narrative ? '...' : narrativeData?.narrative}
                       </p>
 
-                      {(narrativeData?.positive_consequences || narrativeData?.negative_consequences) && <Separator className="my-4 bg-primary/20" />}
+                      {(narrativeData?.positive_consequences && narrativeData.positive_consequences.length > 0) || (narrativeData?.negative_consequences && narrativeData.negative_consequences.length > 0) ? <Separator className="my-4 bg-primary/20" /> : null}
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                         {narrativeData.positive_consequences && narrativeData.positive_consequences.length > 0 && (
@@ -425,5 +437,3 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
     </>
   );
 }
-
-    

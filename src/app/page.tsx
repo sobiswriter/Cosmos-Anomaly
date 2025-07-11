@@ -11,7 +11,7 @@ const prebuiltEvents = [
     id: 'titanic',
     title: 'The Ship of Dreams',
     description: 'What if the RMS Titanic never sank? Explore a world where the tragedy was averted, and the gilded age of ocean liners continued, altering the course of maritime law, technology, and class structure.',
-    image: 'https://placehold.co/600x400/100818/7DF9FF.png',
+    image: '/images/Titanic.png',
     aiHint: 'titanic ship',
     initialChoice: "Avert the sinking of the RMS Titanic on its maiden voyage in 1912.",
     imagePrompt: "The RMS Titanic sailing majestically through a calm, moonlit sea, icebergs safely in the distance. Neo-noir, ethereal style."
@@ -20,7 +20,7 @@ const prebuiltEvents = [
     id: 'apollo',
     title: 'The Red Triumph',
     description: 'What if the Soviet Union landed on the moon first? Witness a reality where the space race had a different victor, leading to a prolonged Cold War, a Soviet-dominated space, and a different technological trajectory.',
-    image: 'https://placehold.co/600x400/100818/FFBF00.png',
+    image: '/images/Soviets.png',
     aiHint: 'soviet astronaut',
     initialChoice: "Ensure the Soviet N1 rocket succeeds, leading to a Soviet moon landing before Apollo 11 in 1969.",
     imagePrompt: "A Soviet cosmonaut plants a red flag with a hammer and sickle on the moon's surface, with the Earth glowing in the dark sky. Dark, cinematic, high-contrast."
@@ -29,7 +29,7 @@ const prebuiltEvents = [
     id: 'orwell-1984',
     title: 'The Ever-Watching Eye',
     description: "What if the dystopian world of '1984' became reality? A world of total surveillance, thought control, and perpetual war, where Big Brother is always watching.",
-    image: 'https://placehold.co/600x400/100818/7DF9FF.png',
+    image: '/images/1984.png',
     aiHint: 'dystopian surveillance',
     initialChoice: "Establish a global government based on the principles of Ingsoc from Orwell's '1984' after a devastating global war.",
     imagePrompt: "A city under the oppressive gaze of a giant screen showing a single, watchful eye. Brutalist architecture, citizens in uniform walking below. Neo-noir, high-contrast, dystopian."
@@ -38,7 +38,7 @@ const prebuiltEvents = [
     id: 'newton',
     title: 'The Unseen Force',
     description: "What if the apple never fell? A world where Newton's laws of universal gravitation remained undiscovered for centuries, leading to a vastly different scientific and technological path for humanity.",
-    image: 'https://placehold.co/600x400/100818/FFBF00.png',
+    image: '/images/Newton.png',
     aiHint: 'scientific instruments',
     initialChoice: "Ensure the apple never falls on Isaac Newton, delaying the discovery of universal gravitation.",
     imagePrompt: "An ornate, complex astrolabe and other bizarre scientific instruments on a wooden desk, lit by candlelight. Steampunk, neo-noir style."
@@ -47,7 +47,7 @@ const prebuiltEvents = [
     id: 'axis-victory',
     title: 'The Thousand-Year Shadow',
     description: "A chilling alternate reality where the Axis powers were victorious in WWII. Explore a world under totalitarian rule, where resistance is a whisper and technology serves oppression.",
-    image: 'https://placehold.co/600x400/100818/7DF9FF.png',
+    image: '/images/Hitler.png',
     aiHint: 'dystopian city',
     initialChoice: "Ensure the Axis powers win World War II.",
     imagePrompt: "A colossal, brutalist monument draped with authoritarian flags looms over a dark, oppressive city. Neo-noir, dystopian, high-contrast style."
@@ -56,7 +56,7 @@ const prebuiltEvents = [
     id: 'british-raj',
     title: 'The Unbroken Raj',
     description: "What if the British Empire never relinquished control over India? Witness a timeline where the jewel in the crown never faded, altering the fate of billions and the geopolitical landscape of the 21st century.",
-    image: 'https://placehold.co/600x400/100818/FFBF00.png',
+    image: '/images/British.png',
     aiHint: 'colonial india',
     initialChoice: "Prevent the independence of India, ensuring the British Raj continues indefinitely.",
     imagePrompt: "A grand colonial-era palace in New Delhi, blending British and Mughal architecture, with Union Jack flags flying alongside modern technology. Ethereal, neo-noir."

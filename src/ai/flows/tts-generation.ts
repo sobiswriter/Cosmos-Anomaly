@@ -12,6 +12,7 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import wav from 'wav';
 import {googleAI} from '@genkit-ai/googleai';
+import {GenerateRequest} from '@genkit-ai/googleai';
 
 const GenerateSpeechInputSchema = z.object({
   text: z.string().describe('The text to be converted to speech.'),
@@ -63,15 +64,22 @@ const generateSpeechFlow = ai.defineFlow(
     const watcherVoices = ['Charon', 'Gacrux'];
     const selectedVoice = watcherVoices[Math.floor(Math.random() * watcherVoices.length)];
 
+    const speechConfig: GenerateRequest['config']['speechConfig'] = {
+      voiceConfig: {
+        prebuiltVoiceConfig: {voiceName: selectedVoice},
+      },
+    };
+
+    // Adjust speaking rate for Gacrux to be more normal
+    if (selectedVoice === 'Gacrux') {
+      speechConfig.speakingRate = 1.0;
+    }
+
     const {media} = await ai.generate({
       model: googleAI.model('gemini-2.5-flash-preview-tts'),
       config: {
         responseModalities: ['AUDIO'],
-        speechConfig: {
-          voiceConfig: {
-            prebuiltVoiceConfig: {voiceName: selectedVoice},
-          },
-        },
+        speechConfig,
       },
       prompt: text,
     });

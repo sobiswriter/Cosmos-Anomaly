@@ -26,13 +26,13 @@ const prebuiltEvents = [
     imagePrompt: "A Soviet cosmonaut plants a red flag with a hammer and sickle on the moon's surface, with the Earth glowing in the dark sky. Dark, cinematic, high-contrast."
   },
    {
-    id: 'library-of-alexandria',
-    title: 'The Unburnt Library',
-    description: "What if the Great Library of Alexandria was never destroyed? Explore a timeline where centuries of ancient knowledge were preserved, accelerating scientific discovery and philosophical thought.",
+    id: 'orwell-1984',
+    title: 'The Ever-Watching Eye',
+    description: "What if the dystopian world of '1984' became reality? A world of total surveillance, thought control, and perpetual war, where Big Brother is always watching.",
     image: 'https://placehold.co/600x400/100818/7DF9FF.png',
-    aiHint: 'ancient library',
-    initialChoice: "Prevent the destruction of the Library of Alexandria.",
-    imagePrompt: "A grand, sprawling ancient library filled with scholars, scrolls, and celestial models, light streaming through marble columns. Ethereal, neo-noir lighting."
+    aiHint: 'dystopian surveillance',
+    initialChoice: "Establish a global government based on the principles of Ingsoc from Orwell's '1984' after a devastating global war.",
+    imagePrompt: "A city under the oppressive gaze of a giant screen showing a single, watchful eye. Brutalist architecture, citizens in uniform walking below. Neo-noir, high-contrast, dystopian."
   },
   {
     id: 'newton',

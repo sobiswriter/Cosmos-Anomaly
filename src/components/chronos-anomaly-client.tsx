@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, History, Loader2, RotateCcw, ThumbsUp, ThumbsDown, Clock } from 'lucide-react';
@@ -13,6 +13,7 @@ import { useLocalStorage } from '@/hooks/use-local-storage';
 import { generateNarrative, type GenerateNarrativeOutput } from '@/ai/flows/narrative-generation';
 import { generateImage } from '@/ai/flows/asset-generation';
 import { getWatcherCommentary } from '@/ai/flows/ai-commentary';
+import { generateSpeech } from '@/ai/flows/tts-generation';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -58,10 +59,18 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
   const [choices, setChoices] = useState<Choice[]>([]);
   const [isCustomChoiceModalOpen, setCustomChoiceModalOpen] = useState(false);
   const [isTimeModalOpen, setTimeModalOpen] = useState(false);
+  const [watcherAudioUrl, setWatcherAudioUrl] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
   
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (watcherAudioUrl && audioRef.current) {
+      audioRef.current.play().catch(e => console.error("Audio playback failed:", e));
+    }
+  }, [watcherAudioUrl]);
 
   const isCustomChoice = (choiceText: string) => {
     const lowerCaseText = choiceText.toLowerCase();
@@ -72,9 +81,11 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
     setIsLoading(true);
     setCustomChoiceModalOpen(false);
     setTimeModalOpen(false);
+    setWatcherAudioUrl(null);
 
     try {
-      const previousNarrative = isReset ? undefined : narrativeData.narrative;
+      const currentTimelineState = isReset ? [] : [...timeline];
+      const previousNarrative = isReset ? undefined : currentTimelineState[currentTimelineState.length - 1]?.generatedNarrative?.narrative;
       
       setNarrativeData({ narrative: "Recalibrating timeline..."});
       setImageUrl('');
@@ -107,13 +118,27 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
       const commentaryInput = {
         timelineEvent: displayNarrative,
         userChoice: choice.text,
-        currentTimeline: isReset ? "" : timeline.map(t => t.choiceMade).join(' -> '),
+        currentTimeline: currentTimelineState.map(t => t.choiceMade).join(' -> '),
       };
 
+      // Fork off speech generation, don't await it to prevent blocking UI
+      const generateWatcherSpeech = async (text: string) => {
+          try {
+              const { audioDataUri } = await generateSpeech({ text });
+              setWatcherAudioUrl(audioDataUri);
+          } catch (error) {
+              console.error("Failed to generate speech for commentary:", error);
+          }
+      };
+      
       const [imageResult, commentaryResult] = await Promise.all([
         generateImage({ narrativeMoment: imagePrompt }),
         getWatcherCommentary(commentaryInput),
       ]);
+      
+      if (commentaryResult.commentary) {
+          generateWatcherSpeech(commentaryResult.commentary);
+      }
       
       const updatedNarrativeResult = {...narrativeResult, narrative: displayNarrative};
 
@@ -126,8 +151,10 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
         watcherCommentary: commentaryResult.commentary,
         choices: narrativeResult.choices || [], 
       };
+      
+      const newTimeline = isReset ? [newTimelineEvent] : [...currentTimelineState, newTimelineEvent];
+      setTimeline(newTimeline);
 
-      setTimeline(prev => isReset ? [newTimelineEvent] : [...prev, newTimelineEvent]);
       setNarrativeData(updatedNarrativeResult);
       setImageUrl(imageResult.imageUrl);
       setCommentary(commentaryResult.commentary);
@@ -166,24 +193,11 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
   };
   
   const handleReset = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      await processChoice({ text: initialChoice }, true);
-
-      toast({
-        title: "Timeline Reset",
-        description: "The echoes of your choices have faded.",
-      });
-    } catch (error) {
-      console.error("Failed to reset timeline:", error);
-      toast({
-        variant: "destructive",
-        title: "Reset Failed",
-        description: "Could not reset the timeline. The anomaly persists.",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    await processChoice({ text: initialChoice }, true);
+    toast({
+      title: "Timeline Reset",
+      description: "The echoes of your choices have faded.",
+    });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [toast, initialChoice]);
   
@@ -247,6 +261,7 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
         onClose={() => setTimeModalOpen(false)}
         onSubmit={(timeChoice) => processChoice({ text: timeChoice })}
       />
+      {watcherAudioUrl && <audio ref={audioRef} src={watcherAudioUrl} />}
       <main className="p-4 md:p-6 lg:p-8 relative min-h-screen flex flex-col font-body">
         <header className="text-center mb-6 md:mb-8 relative">
            <Link href="/" className="absolute top-0 left-0 text-primary hover:text-amber transition-colors z-10">
@@ -386,7 +401,7 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
                     >
                       <h2 className='font-headline text-2xl text-primary mb-2'>{narrativeData?.timeline || 'Calculating...'}</h2>
                       <p className="text-base md:text-lg leading-loose mb-6">
-                        {isLoading && !narrativeData?.narrative ? '...' : narrativeData?.narrative}
+                        {isLoading && !narrativeData?.narrative ? '...' : narrativeData.narrative?.replace(/^[\*\-\:]\s*/, '')}
                       </p>
 
                       {(narrativeData?.positive_consequences && narrativeData.positive_consequences.length > 0) || (narrativeData?.negative_consequences && narrativeData.negative_consequences.length > 0) ? <Separator className="my-4 bg-primary/20" /> : null}
@@ -441,3 +456,5 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
     </>
   );
 }
+
+    

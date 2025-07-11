@@ -44,13 +44,13 @@ const prebuiltEvents = [
     imagePrompt: "An ornate, complex astrolabe and other bizarre scientific instruments on a wooden desk, lit by candlelight. Steampunk, neo-noir style."
   },
   {
-    id: 'axis-victory',
-    title: 'The Thousand-Year Shadow',
-    description: "A chilling alternate reality where the Axis powers were victorious in WWII. Explore a world under totalitarian rule, where resistance is a whisper and technology serves oppression.",
-    image: '/images/Hitler.png',
-    aiHint: 'dystopian city',
-    initialChoice: "Ensure the Axis powers win World War II.",
-    imagePrompt: "A colossal, brutalist monument draped with authoritarian flags looms over a dark, oppressive city. Neo-noir, dystopian, high-contrast style."
+    id: 'library',
+    title: 'The Unburnt Library',
+    description: 'What if the Library of Alexandria was never destroyed? Imagine a world where ancient knowledge was preserved, accelerating science, philosophy, and technology by centuries.',
+    image: '/images/library.png',
+    aiHint: 'ancient library',
+    initialChoice: "Prevent the destruction of the Library of Alexandria.",
+    imagePrompt: "The grand interior of the Library of Alexandria, with scholars reading scrolls under towering shelves of knowledge. Sunlight streams through marble pillars. Neo-noir, ethereal style."
   },
   {
     id: 'british-raj',

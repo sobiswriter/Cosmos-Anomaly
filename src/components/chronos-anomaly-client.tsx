@@ -34,8 +34,10 @@ import { Toaster } from '@/components/ui/toaster';
 import { useToast } from '@/hooks/use-toast';
 import MilestoneModal from '@/components/milestone-modal';
 import Link from 'next/link';
+import CustomChoiceModal from './custom-choice-modal';
 
 const MILESTONE_FLAG = '[MILESTONE_EVENT]';
+const CUSTOM_CHOICE_KEYWORDS = ['path', 'way', 'define', 'choose', 'another', '...'];
 
 interface ChronosAnomalyClientProps {
   initialChoice: string;
@@ -52,13 +54,20 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
   const { toast } = useToast();
   const [milestoneEvent, setMilestoneEvent] = useState<{imageUrl: string; narrative: string} | null>(null);
   const [choices, setChoices] = useState<Choice[]>([]);
+  const [isCustomChoiceModalOpen, setCustomChoiceModalOpen] = useState(false);
   
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  const handleSelectChoice = async (choice: Choice | { text: string }) => {
+  const isCustomChoice = (choiceText: string) => {
+    const lowerCaseText = choiceText.toLowerCase();
+    return CUSTOM_CHOICE_KEYWORDS.some(keyword => lowerCaseText.includes(keyword));
+  };
+  
+  const processChoice = async (choice: { text: string }) => {
     setIsLoading(true);
+    setCustomChoiceModalOpen(false);
 
     try {
       const previousNarrative = narrative;
@@ -135,12 +144,21 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
     }
   };
 
+
+  const handleSelectChoice = (choice: Choice) => {
+    if (isCustomChoice(choice.text)) {
+      setCustomChoiceModalOpen(true);
+    } else {
+      processChoice(choice);
+    }
+  };
+  
   const handleReset = useCallback(async () => {
     setIsLoading(true);
     try {
       setTimeline([]);
       // Instead of going to a "start" node, we re-trigger the initial choice
-      await handleSelectChoice({ text: initialChoice });
+      await processChoice({ text: initialChoice });
 
       toast({
         title: "Timeline Reset",
@@ -173,7 +191,7 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
         } else {
           // This is a new timeline, start from the beginning
           setCommentary("The Watcher is observing. The first choice has been made.");
-          await handleSelectChoice({ text: initialChoice });
+          await processChoice({ text: initialChoice });
         }
       } catch (error) {
         console.error("Initialization Error:", error);
@@ -206,6 +224,11 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
         onClose={() => setMilestoneEvent(null)}
         imageUrl={milestoneEvent?.imageUrl || ""}
         narrative={milestoneEvent?.narrative || ""}
+      />
+      <CustomChoiceModal
+        isOpen={isCustomChoiceModalOpen}
+        onClose={() => setCustomChoiceModalOpen(false)}
+        onSubmit={(customChoice) => processChoice({ text: customChoice })}
       />
       <main className="p-4 md:p-6 lg:p-8 relative min-h-screen flex flex-col font-body">
         <header className="text-center mb-6 md:mb-8 relative">

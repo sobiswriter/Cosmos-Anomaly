@@ -330,8 +330,8 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
                   </Button>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <ScrollArea className="h-48">
+              <CardContent className="h-[120px]">
+                <ScrollArea className="h-full">
                   <AnimatePresence mode="wait">
                     <motion.p
                       key={commentary}
@@ -339,7 +339,7 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
                       transition={{ duration: 0.5 }}
-                      className="text-amber/80 italic text-sm leading-relaxed"
+                      className="text-amber/80 italic text-sm leading-relaxed pr-4"
                     >
                       {isLoading && !commentary ? "..." : commentary}
                     </motion.p>

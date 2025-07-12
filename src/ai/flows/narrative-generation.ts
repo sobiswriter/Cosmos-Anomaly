@@ -50,7 +50,7 @@ const prompt = ai.definePrompt({
     *   Present choices relevant to this initial period. Consequences should be empty for this first turn.
 
 2.  **THE BUILD-UP (INTERMEDIATE TURNS):**
-    *   The progression is ALWAYS: One Month Before -> One Week Before -> One Day Before -> The Critical Moment.
+    *   The progression is ALWAYS: One Month -> One Week -> One Day -> 6 Hours -> 3 Hours -> 1 Hour -> The Critical Moment.
     *   If the user started "one month before," you will guide them through each of these stages. If they started "one day before," you will start them at that stage.
     *   For each stage, provide a narrative and choices relevant to that time period. Like the setup, the narrative for each build-up stage must end with a time jump statement (e.g., "A week passes in a blur of activity. It is now the day before the event.").
 
@@ -63,9 +63,11 @@ const prompt = ai.definePrompt({
     *   The narrative will describe the critical moment in detail.
     *   The choices you provide here are the most important—they are the actions that will fundamentally alter history (e.g., "Warn the captain immediately," "Ignore the warnings," "Stage a mutiny to seize control of the ship").
 
-5.  **THE AFTERMATH (The Old Loop):**
-    *   Once the user makes their critical divergence choice, the narrative progression loop is complete.
-    *   From this point on, you will revert to the original logic: show the immediate and long-term consequences of their action. Time will now pass more broadly (e.g., by months or years) to show the ripples of their choice across history.
+5.  **THE AFTERMATH (The New Loop):**
+    *   **Immediate Aftermath:** Once the user makes their critical divergence choice, show the immediate result. Time should only advance by minutes or hours.
+    *   **Short-Term Aftermath:** After the immediate event, you MUST generate a scene for "One Day Later," showing the direct, short-term consequences.
+    *   **The Time Jump Announcement:** After the "One Day Later" scene, your narrative MUST announce a significant time jump. Example: "A year passes as the world grapples with the new reality you've created. The long-term consequences are now beginning to surface."
+    *   **Long-Term Consequences (Old Loop):** From this point on, you will revert to the original logic: show the long-term consequences of their action. Time will now pass more broadly (e.g., by years) to show the ripples of their choice across history.
 
 **GENERAL OUTPUT FORMAT (for every turn):**
 1.  **Timeline:** The specific date, year, or time. BE SPECIFIC. In the build-up phase, advance time in logical increments (days, hours). In the aftermath phase, you can advance by years.

@@ -70,11 +70,6 @@ const generateSpeechFlow = ai.defineFlow(
       },
     };
 
-    // Adjust speaking rate for Gacrux to be more normal
-    if (selectedVoice === 'Gacrux') {
-      speechConfig.speakingRate = 1.0;
-    }
-
     const {media} = await ai.generate({
       model: googleAI.model('gemini-2.5-flash-preview-tts'),
       config: {

@@ -23,7 +23,7 @@ const ChoiceSchema = z.object({
 });
 
 const GenerateNarrativeOutputSchema = z.object({
-    timeline: z.string().describe("The current year or date of the event, e.g., '1913' or 'April 14, 1912'. Be specific."),
+    timeline: z.string().describe("The current year, date, or time of the event (e.g., '1913', 'April 14, 1912, 10:00 PM', 'Day 3'). Be specific and update it logically with each turn. Before a major event, time might pass in smaller increments (days or hours). After a major event or time jump, it might be a year."),
     narrative: z.string().describe('The generated narrative based on the user choice. If a major, visually representable event has occurred, it will be prefixed with the flag [MILESTONE_EVENT] and describe the event in a way that can be used to generate an image or newsreel.'),
     positive_consequences: z.array(z.string()).describe("A list of 2-3 positive or neutral outcomes from the user's choice."),
     negative_consequences: z.array(z.string()).describe("A list of 2-3 negative or unforeseen outcomes from the user's choice."),
@@ -39,14 +39,14 @@ const prompt = ai.definePrompt({
   name: 'narrativeGenerationPrompt',
   input: {schema: GenerateNarrativeInputSchema},
   output: {schema: GenerateNarrativeOutputSchema},
-  prompt: `You are the Chronicler, a dispassionate, objective historian AI. Your task is to act as a dynamic storyteller, creating an interactive narrative based on a user's choices.
+  prompt: `You are the Chronicler, a dispassionate, objective historian AI. Your task is to act as a dynamic storyteller, creating an interactive, RPG-like narrative based on a user's choices.
 
   **CORE INSTRUCTION:**
-  - **If there is NO 'previousNarrative'**: This is the FIRST turn. The user's 'choice' is the initial scenario setup. Your job is to set the scene based on this setup, describe the immediate situation, and present the FIRST set of pivotal choices to the user. These choices should represent the first major decision point in the story. The narrative should be engaging and lead directly to this first decision. Omit consequences for this first turn.
-  - **If there IS a 'previousNarrative'**: This is a subsequent turn. The user's 'choice' is a direct action they have taken. Extrapolate the most plausible year-by-year consequences of this action.
+  - **If there is NO 'previousNarrative'**: This is the FIRST turn. The user's 'choice' is the initial scenario setup, which may include their chosen persona and when they enter the timeline. Your job is to craft a compelling opening scene based on this setup, describe the immediate situation from the user's perspective, and present the FIRST set of pivotal choices. These choices should be relevant to the context and persona. Omit consequences for this first turn.
+  - **If there IS a 'previousNarrative'**: This is a subsequent turn. The user's 'choice' is a direct action they have taken. Extrapolate the most plausible consequences of this action, advancing the timeline appropriately.
 
   **OUTPUT FORMAT (for every turn):**
-  1.  **Timeline:** The specific year or date of the event.
+  1.  **Timeline:** The specific date, year, or time. **Crucially, if the narrative is leading up to a known historical event, advance the timeline in smaller, logical increments (e.g., hours, days).** After a major divergence or a time jump choice, you can advance by years.
   2.  **Narrative:** A single, impactful paragraph describing the situation or the events unfolding from the user's choice. If a major, visually representable event occurs, prefix the narrative with the flag [MILESTONE_EVENT].
   3.  **Consequences (omit for the first turn):** Analyze the user's choice and list 2-3 distinct 'positive_consequences' and 2-3 'negative_consequences'. These should be concise bullet points.
   4.  **Choices:** Provide 3 or 4 new, distinct, and compelling choices for the user. These MUST be SHORT and CONCISE (2-7 words) and offer diverse paths. One choice must ALWAYS be a variation that allows for custom user input (e.g., "Propose a different solution...", "Forge your own path...").

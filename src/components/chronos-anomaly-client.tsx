@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
@@ -130,10 +129,14 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
       };
 
       // Fork off speech generation, don't await it to prevent blocking UI
-      const generateWatcherSpeech = async (text: string) => {
+      const generateWatcherSpeech = async (commentaryText: string) => {
           try {
-              const { audioDataUri } = await generateSpeech({ text });
-              setWatcherAudioUrl(audioDataUri);
+              // Strip the tonal cue e.g. (Sarcastically) from the text before sending to TTS
+              const speechText = commentaryText.replace(/\(.*?\)\s*/, '');
+              if (speechText) {
+                const { audioDataUri } = await generateSpeech({ text: speechText });
+                setWatcherAudioUrl(audioDataUri);
+              }
           } catch (error) {
               console.error("Failed to generate speech for commentary:", error);
           }
@@ -476,5 +479,3 @@ export default function ChronosAnomalyClient({ initialChoice, initialImagePrompt
     </>
   );
 }
-
-    

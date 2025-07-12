@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Heart } from "lucide-react";
 import Image from 'next/image';
 import { CreateEventForm } from '@/components/create-event-form';
-import StartSimulationModal from '@/components/start-simulation-modal'; // New Import
+import StartSimulationModal from '@/components/start-simulation-modal';
+import TiltedCard from '@/components/TiltedCard'; // New Import
 
 export interface PrebuiltEvent {
   id: string;
@@ -108,28 +109,25 @@ export default function MainMenu() {
           <h2 className="font-headline text-3xl text-primary drop-shadow-cyan mb-6 text-center">Pre-defined Divergence Points</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {prebuiltEvents.map((event) => (
-              <Card key={event.id} className="bg-card/50 backdrop-blur-sm border-primary/20 flex flex-col overflow-hidden transform hover:scale-105 hover:border-primary transition-all duration-300">
-                <div className="aspect-video w-full overflow-hidden">
-                  <Image
-                      src={event.image}
-                      alt={event.title}
-                      width={600}
-                      height={400}
-                      className="object-cover w-full h-full"
-                      data-ai-hint={event.aiHint}
-                  />
+                <div key={event.id} className="tilted-card-container">
+                    <TiltedCard
+                      imageSrc={event.image}
+                      altText={event.title}
+                      captionText={event.title}
+                      containerHeight="450px"
+                      displayOverlayContent={true}
+                      onClick={() => handleStartSimulation(event)}
+                      overlayContent={
+                        <div className="tilted-card-overlay">
+                            <h3 className="font-headline text-2xl text-primary">{event.title}</h3>
+                            <p className="text-muted-foreground text-sm mt-2">{event.description}</p>
+                             <Button variant="outline" className="mt-4 text-lg font-headline border-primary/50 hover:bg-primary/20 hover:text-primary">
+                                Start Simulation <ArrowRight className="ml-2 h-5 w-5" />
+                            </Button>
+                        </div>
+                      }
+                    />
                 </div>
-                <CardHeader>
-                  <CardTitle className="font-headline text-2xl text-primary">{event.title}</CardTitle>
-                  <CardDescription className="text-muted-foreground">{event.description}</CardDescription>
-                </CardHeader>
-                <CardContent className="flex-grow"></CardContent>
-                <CardFooter>
-                  <Button variant="outline" className="w-full text-lg font-headline border-primary/50 hover:bg-primary/20 hover:text-primary" onClick={() => handleStartSimulation(event)}>
-                    Start Simulation <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </CardFooter>
-              </Card>
             ))}
           </div>
 

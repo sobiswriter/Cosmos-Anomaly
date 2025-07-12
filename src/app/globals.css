@@ -122,3 +122,26 @@
   filter: drop-shadow(0 0 8px hsl(var(--primary) / 0.7));
 }
 
+.tilted-card-container {
+  width: 100%;
+  height: 100%;
+}
+
+.tilted-card-overlay {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  text-align: center;
+  padding: 1.5rem;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to top, rgba(16, 8, 24, 0.9) 20%, rgba(16, 8, 24, 0) 80%);
+  color: white;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.tilted-card-container:hover .tilted-card-overlay {
+  opacity: 1;
+}

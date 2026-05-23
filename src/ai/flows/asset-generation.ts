@@ -10,6 +10,7 @@
  */
 
 import {ai} from '@/ai/genkit';
+import {googleAI} from '@genkit-ai/googleai';
 import {z} from 'genkit';
 
 const GenerateImageInputSchema = z.object({
@@ -35,7 +36,7 @@ const generateImageFlow = ai.defineFlow(
   async input => {
     try {
       const {media} = await ai.generate({
-        model: 'googleai/gemini-2.0-flash-preview-image-generation',
+        model: googleAI.model('imagen-4.0-fast-generate-001'),
         prompt: `Generate an image based on this description. The image should be in a dark, neo-noir, cinematic style with high contrast. It may have ethereal, glowing UI elements. It should have a persistent film grain effect. Description: ${input.narrativeMoment}`,
         config: {
           responseModalities: ['TEXT', 'IMAGE'],

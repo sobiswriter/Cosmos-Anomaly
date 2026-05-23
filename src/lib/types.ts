@@ -1,6 +1,6 @@
 
-import { GenerateNarrativeOutput } from './ai/flows/narrative-generation';
-import { Choice } from './story';
+import {GenerateNarrativeOutput} from '@/ai/flows/narrative-generation';
+import {Choice} from './story';
 
 export type TimelineEvent = {
   id: number;
